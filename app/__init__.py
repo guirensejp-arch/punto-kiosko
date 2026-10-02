@@ -78,12 +78,15 @@ def _registrar_filtros(app):
     )
     from app.services.phone_normalizer import formatear_telefono
     from app.utils.moneda import centavos_a_editable, formatear_centavos
+    from app.utils.fechas import a_local, formatear_local
     from app.models.venta import CLASES_ESTADO_VENTA, ETIQUETAS_ESTADO_VENTA
     from app.models.promocion import CLASES_ESTADO_PROMO, ETIQUETAS_ESTADO_PROMO
 
     app.jinja_env.filters['moneda'] = formatear_centavos
     app.jinja_env.filters['centavos_editable'] = centavos_a_editable
     app.jinja_env.filters['telefono'] = formatear_telefono
+    app.jinja_env.filters['local'] = a_local
+    app.jinja_env.filters['fecha_local'] = formatear_local
     app.jinja_env.globals.update(
         costo_linea=costo_linea,
         costo_producto=costo_producto,

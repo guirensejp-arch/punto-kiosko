@@ -143,7 +143,7 @@
         <tr class="{{ 'text-muted' if estado == estado_vencida and lote.cantidad == 0 else '' }}">
           <td>{{ lote.insumo.nombre }}</td>
           <td>{{ ('#' ~ lote.numero) if lote.numero else '—' }}</td>
-          <td>{{ lote.fecha_ingreso.strftime('%d/%m/%Y') }}</td>
+          <td>{{ (lote.fecha_ingreso | local).strftime('%d/%m/%Y') }}</td>
           <td>{{ lote.fecha_vencimiento.strftime('%d/%m/%Y') }}</td>
           <td class="text-center">
             <span class="badge {{ clases_estado[estado] }}">{{ etiquetas_estado[estado] }}</span>

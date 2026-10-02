@@ -6,7 +6,7 @@
 {% block ticket %}
   {% with titulo='Venta #' ~ venta.numero,
           subtitulo=etiquetas_pedido.get(venta.estado.value, venta.estado.value),
-          fecha=venta.fecha_hora.strftime('%d/%m/%Y %H:%M') %}
+          fecha=(venta.fecha_hora | local).strftime('%d/%m/%Y %H:%M') %}
     {% include 'tickets/_cabecera.html' %}
   {% endwith %}
 

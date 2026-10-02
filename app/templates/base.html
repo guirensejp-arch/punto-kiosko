@@ -121,10 +121,14 @@
 
       <div class="ms-auto d-flex align-items-center gap-2">
         {% if current_user.is_authenticated %}
+        <span class="topbar-turno d-none d-sm-inline-flex" title="Hora del negocio">
+          <i class="bi bi-clock"></i>
+          <span id="reloj-topbar" class="tabular">--:--</span>
+        </span>
         {% if turno_actual %}
         <span class="topbar-turno d-none d-md-inline-flex" title="Turno de caja abierto">
           <i class="bi bi-broadcast"></i>
-          <span>Turno abierto desde {{ turno_actual.fecha_apertura.strftime('%H:%M') }}</span>
+          <span>Turno abierto desde {{ (turno_actual.fecha_apertura | local).strftime('%H:%M') }}</span>
         </span>
         {% endif %}
         <div class="dropdown">
@@ -244,6 +248,19 @@
 
     input.addEventListener('input', aplicar);
     input.addEventListener('search', aplicar);
+  })();
+
+  (function () {
+    var reloj = document.getElementById('reloj-topbar');
+    if (!reloj) return;
+    function pintar() {
+      var ahora = new Date();
+      var hh = String(ahora.getHours()).padStart(2, '0');
+      var mm = String(ahora.getMinutes()).padStart(2, '0');
+      reloj.textContent = hh + ':' + mm;
+    }
+    pintar();
+    setInterval(pintar, 30000);
   })();
 </script>
 {% block scripts %}{% endblock %}

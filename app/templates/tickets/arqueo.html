@@ -4,8 +4,8 @@
 {% block title %}Arqueo — Turno {{ turno.id }}{% endblock %}
 
 {% block ticket %}
-  {% set rango = turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') %}
-  {% if turno.fecha_cierre %}{% set rango = rango ~ '– ' ~ turno.fecha_cierre.strftime('%H:%M') %}{% endif %}
+  {% set rango = (turno.fecha_apertura | local).strftime('%d/%m/%Y %H:%M') %}
+  {% if turno.fecha_cierre %}{% set rango = rango ~ '– ' ~ (turno.fecha_cierre | local).strftime('%H:%M') %}{% endif %}
   {% with titulo='Arqueo — Turno #' ~ turno.id, fecha=rango %}
     {% include 'tickets/_cabecera.html' %}
   {% endwith %}
@@ -25,7 +25,7 @@
 
   {{ sep() }}
   {{ fila('Cajero', turno.usuario.nombre_completo) }}
-  {{ fila('Cerrado', arqueo.fecha_hora.strftime('%d/%m/%Y %H:%M')) }}
+  {{ fila('Cerrado', (arqueo.fecha_hora | local).strftime('%d/%m/%Y %H:%M')) }}
 
   {% with nota_pie='Comprobante de arqueo de caja' %}
     {% include 'tickets/_pie.html' %}

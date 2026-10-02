@@ -4,8 +4,8 @@
 {% block title %}Cierre Z — Turno {{ turno.id }}{% endblock %}
 
 {% block ticket %}
-  {% set rango = turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') %}
-  {% if turno.fecha_cierre %}{% set rango = rango ~ '– ' ~ turno.fecha_cierre.strftime('%H:%M') %}{% endif %}
+  {% set rango = (turno.fecha_apertura | local).strftime('%d/%m/%Y %H:%M') %}
+  {% if turno.fecha_cierre %}{% set rango = rango ~ '– ' ~ (turno.fecha_cierre | local).strftime('%H:%M') %}{% endif %}
   {% with titulo='Cierre Z — Turno #' ~ turno.id, fecha=rango %}
     {% include 'tickets/_cabecera.html' %}
   {% endwith %}

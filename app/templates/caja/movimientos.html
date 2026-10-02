@@ -81,7 +81,7 @@
           {{ mov.categoria.value if mov.categoria else '' }}
           {% if mov.metodo_pago %}· {{ mov.metodo_pago.nombre }}{% endif %}
           {% if mov.proveedor %}· {{ mov.proveedor.nombre }}{% endif %}
-          · {{ mov.fecha_hora.strftime('%H:%M') }} · {{ mov.usuario.nombre }}
+          · {{ (mov.fecha_hora | local).strftime('%H:%M') }} · {{ mov.usuario.nombre }}
         </span>
         {% if mov.categoria and mov.categoria.value == 'PROVEEDOR' %}
         <a href="{{ url_for('caja.compra_ticket', movimiento_id=mov.id) }}?auto=1" target="_blank" class="btn btn-sm btn-outline-secondary">Imprimir</a>

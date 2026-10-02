@@ -6,8 +6,8 @@
   <div>
     <h1 class="page-title">Cierre Z</h1>
     <div class="page-meta">
-      Turno {{ turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') }}
-      {% if turno.fecha_cierre %}– {{ turno.fecha_cierre.strftime('%H:%M') }}{% endif %}
+      Turno {{ (turno.fecha_apertura | local).strftime('%d/%m/%Y %H:%M') }}
+      {% if turno.fecha_cierre %}– {{ (turno.fecha_cierre | local).strftime('%H:%M') }}{% endif %}
       · {{ turno.usuario.nombre_completo }}
     </div>
   </div>
@@ -22,8 +22,8 @@
   <div class="text-center fw-bold">{{ branding.negocio.nombre }} {{ branding.negocio.emoji }}</div>
   <div class="text-center">Cierre Z — Turno #{{ turno.id }}</div>
   <div class="text-center">
-    {{ turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') }}
-    {% if turno.fecha_cierre %}– {{ turno.fecha_cierre.strftime('%H:%M') }}{% endif %}
+    {{ (turno.fecha_apertura | local).strftime('%d/%m/%Y %H:%M') }}
+    {% if turno.fecha_cierre %}– {{ (turno.fecha_cierre | local).strftime('%H:%M') }}{% endif %}
   </div>
   <div class="border-top border-dark my-2"></div>
   <div>VENTAS</div>

@@ -79,7 +79,7 @@
         {% for venta in ventas %}
         <tr class="{{ 'text-muted' if venta.estado.value == 'ANULADA' else '' }}">
           <td>{{ venta.numero }}</td>
-          <td>{{ venta.fecha_hora.strftime('%H:%M') }}</td>
+          <td>{{ (venta.fecha_hora | local).strftime('%H:%M') }}</td>
           <td>
             {{ venta.cliente.nombre_completo if venta.cliente else 'Ocasional' }}
             {% if venta.cliente %}<br><span class="text-muted small">{{ venta.cliente.telefono | telefono }}</span>{% endif %}
@@ -115,7 +115,7 @@
       <span>
         <strong>#{{ venta.numero }}</strong>
         <span class="badge {{ clases[venta.estado.value] }} ms-1">{{ etiquetas[venta.estado.value] }}</span><br>
-        <span class="text-muted small">{{ venta.fecha_hora.strftime('%H:%M') }} · {{ venta.metodo_pago.nombre if venta.metodo_pago else '—' }}</span>
+        <span class="text-muted small">{{ (venta.fecha_hora | local).strftime('%H:%M') }} · {{ venta.metodo_pago.nombre if venta.metodo_pago else '—' }}</span>
       </span>
       <span class="fw-semibold">{{ venta.total | moneda }}</span>
     </a>

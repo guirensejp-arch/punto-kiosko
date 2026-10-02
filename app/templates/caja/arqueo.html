@@ -6,7 +6,7 @@
   <div>
     <h1 class="page-title">Arqueo</h1>
     <div class="page-meta">
-      Turno desde {{ turno.fecha_apertura.strftime('%H:%M') }} · {{ turno.usuario.nombre_completo }}
+      Turno desde {{ (turno.fecha_apertura | local).strftime('%H:%M') }} · {{ turno.usuario.nombre_completo }}
     </div>
   </div>
   <div class="page-accion">

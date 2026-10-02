@@ -74,10 +74,10 @@
       <tbody>
         {% for fila in filas %}
         <tr>
-          <td>{{ fila.turno.fecha_apertura.strftime('%d/%m/%Y') }}</td>
+          <td>{{ (fila.turno.fecha_apertura | local).strftime('%d/%m/%Y') }}</td>
           <td>
             #{{ fila.turno.id }} ·
-            {{ fila.turno.fecha_apertura.strftime('%H:%M') }}{% if fila.turno.fecha_cierre %}–{{ fila.turno.fecha_cierre.strftime('%H:%M') }}{% endif %}
+            {{ (fila.turno.fecha_apertura | local).strftime('%H:%M') }}{% if fila.turno.fecha_cierre %}–{{ (fila.turno.fecha_cierre | local).strftime('%H:%M') }}{% endif %}
           </td>
           <td>{{ fila.turno.usuario.nombre_completo }}</td>
           <td class="text-end">{{ fila.fondo | moneda }}</td>
@@ -118,11 +118,11 @@
     {% for fila in filas %}
     <div class="px-3 py-2 border-bottom">
       <div class="d-flex justify-content-between">
-        <strong>{{ fila.turno.fecha_apertura.strftime('%d/%m/%Y') }} · #{{ fila.turno.id }}</strong>
+        <strong>{{ (fila.turno.fecha_apertura | local).strftime('%d/%m/%Y') }} · #{{ fila.turno.id }}</strong>
         <a href="{{ url_for('caja.cierre_z', turno_id=fila.turno.id) }}" class="btn btn-sm btn-outline-secondary">Ver Z</a>
       </div>
       <div class="text-muted small">
-        {{ fila.turno.fecha_apertura.strftime('%H:%M') }}{% if fila.turno.fecha_cierre %}–{{ fila.turno.fecha_cierre.strftime('%H:%M') }}{% endif %}
+        {{ (fila.turno.fecha_apertura | local).strftime('%H:%M') }}{% if fila.turno.fecha_cierre %}–{{ (fila.turno.fecha_cierre | local).strftime('%H:%M') }}{% endif %}
         · {{ fila.turno.usuario.nombre_completo }}
       </div>
       <div class="small">

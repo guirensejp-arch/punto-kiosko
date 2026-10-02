@@ -7,7 +7,7 @@
   {% set es_merma = conteo.diferencia > 0 %}
   {% with titulo=('Merma' if es_merma else 'Ajuste de inventario'),
           subtitulo=conteo.insumo.nombre,
-          fecha=conteo.fecha_hora.strftime('%d/%m/%Y %H:%M') %}
+          fecha=(conteo.fecha_hora | local).strftime('%d/%m/%Y %H:%M') %}
     {% include 'tickets/_cabecera.html' %}
   {% endwith %}
 

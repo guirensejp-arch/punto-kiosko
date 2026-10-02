@@ -4,7 +4,7 @@
 {% block title %}Cierre X — Turno {{ turno.id }}{% endblock %}
 
 {% block ticket %}
-  {% with titulo='*** CIERRE X (PARCIAL) ***', subtitulo='Turno #' ~ turno.id ~ ' (NO CIERRA)', fecha=turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') %}
+  {% with titulo='*** CIERRE X (PARCIAL) ***', subtitulo='Turno #' ~ turno.id ~ ' (NO CIERRA)', fecha=(turno.fecha_apertura | local).strftime('%d/%m/%Y %H:%M') %}
     {% include 'tickets/_cabecera.html' %}
   {% endwith %}
 

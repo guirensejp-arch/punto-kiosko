@@ -9,7 +9,7 @@
       <span class="badge {{ clases[venta.estado.value] }}">{{ etiquetas[venta.estado.value] }}</span>
     </h1>
     <div class="page-meta">
-      {{ venta.fecha_hora.strftime('%d/%m/%Y %H:%M') }} · por {{ venta.usuario.nombre_completo }}
+      {{ (venta.fecha_hora | local).strftime('%d/%m/%Y %H:%M') }} · por {{ venta.usuario.nombre_completo }}
     </div>
   </div>
   <div class="page-accion d-flex flex-wrap gap-2 align-items-center">

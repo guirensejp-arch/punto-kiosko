@@ -34,7 +34,7 @@
       <h1 class="page-title">Caja</h1>
       <div class="page-meta">
         Turno <span class="badge badge-estado-ok">abierto</span>
-        desde {{ turno.fecha_apertura.strftime('%H:%M') }} · {{ turno.usuario.nombre_completo }}
+        desde {{ (turno.fecha_apertura | local).strftime('%H:%M') }} · {{ turno.usuario.nombre_completo }}
       </div>
     </div>
     <div class="page-accion d-flex flex-wrap gap-2">
@@ -139,7 +139,7 @@
         <span class="text-muted small">
           {{ mov.categoria.value if mov.categoria else '' }}
           {% if mov.proveedor %}· {{ mov.proveedor.nombre }}{% endif %}
-          · {{ mov.fecha_hora.strftime('%H:%M') }} · {{ mov.usuario.nombre }}
+          · {{ (mov.fecha_hora | local).strftime('%H:%M') }} · {{ mov.usuario.nombre }}
         </span>
       </div>
       {% else %}

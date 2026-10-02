@@ -13,7 +13,7 @@
   {% for fila_turno in filas %}
   <div class="ticket-item">
     <div class="ticket-fila">
-      <span>#{{ fila_turno.turno.id }} · {{ fila_turno.turno.fecha_apertura.strftime('%d/%m %H:%M') }}</span>
+      <span>#{{ fila_turno.turno.id }} · {{ (fila_turno.turno.fecha_apertura | local).strftime('%d/%m %H:%M') }}</span>
       <span class="der">{{ fila_turno.total_caja | moneda }}</span>
     </div>
     <div class="ticket-nota">

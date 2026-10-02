@@ -6,7 +6,7 @@
 {% block ticket %}
   {% with titulo='Carga de insumo',
           subtitulo='Lote ' ~ (lote.numero or '#' ~ lote.id),
-          fecha=lote.fecha_ingreso.strftime('%d/%m/%Y %H:%M') %}
+          fecha=(lote.fecha_ingreso | local).strftime('%d/%m/%Y %H:%M') %}
     {% include 'tickets/_cabecera.html' %}
   {% endwith %}
 
