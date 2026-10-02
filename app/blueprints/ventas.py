@@ -109,12 +109,14 @@ def buscar():
         return jsonify({'articulos': []})
 
     articulos = []
+    match = None
     codigo = (
         CodigoBarras.query.filter_by(codigo=q, activo=True)
         .first()
     )
     if codigo is not None and codigo.articulo.activo:
         articulos = [codigo.articulo]
+        match = 'codigo'
     else:
         patron = f'%{q}%'
         articulos = (
@@ -130,7 +132,7 @@ def buscar():
             .all()
         )
 
-    return jsonify({'articulos': [_serializar(a) for a in articulos]})
+    return jsonify({'articulos': [_serializar(a) for a in articulos], 'match': match})
 
 
 def _serializar(articulo):

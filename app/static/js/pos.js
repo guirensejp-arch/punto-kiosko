@@ -131,7 +131,7 @@
   function pedir(q) {
     return fetch(cfg.buscarUrl + '?q=' + encodeURIComponent(q))
       .then(function (r) { return r.json(); })
-      .then(function (data) { return data.articulos || []; });
+      .then(function (data) { return { articulos: data.articulos || [], match: data.match || null }; });
   }
 
   function mostrarResultados(articulos) {
@@ -160,15 +160,16 @@
   function buscar() {
     var q = scan.value.trim();
     if (!q) { resultados.innerHTML = ''; return; }
-    pedir(q).then(function (articulos) {
-      // Escaneo: si hay match exacto por codigo, no hay ambiguedad -> agregar.
-      if (articulos.length === 1) {
-        agregar(articulos[0]);
+    pedir(q).then(function (res) {
+      // Escaneo: solo si el codigo coincide exacto con un codigo de barras.
+      // La busqueda por texto (teclado) siempre muestra la lista para elegir.
+      if (res.match === 'codigo' && res.articulos.length === 1) {
+        agregar(res.articulos[0]);
         scan.value = '';
         resultados.innerHTML = '';
         return;
       }
-      mostrarResultados(articulos);
+      mostrarResultados(res.articulos);
     });
   }
 
