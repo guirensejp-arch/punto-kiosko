@@ -97,14 +97,16 @@
     <div class="card">
       <div class="card-header">Rentabilidad</div>
       <div class="card-body small">
+        {% set elaborado = articulo.insumos %}
         <div class="d-flex justify-content-between border-bottom py-1">
-          <span>Precio de costo</span><span>{{ (articulo.precio_costo or 0) | moneda }}</span>
+          <span>{{ 'Costo (insumos)' if elaborado else 'Precio de costo' }}</span>
+          <span>{{ costo | moneda }}</span>
         </div>
         <div class="d-flex justify-content-between border-bottom py-1">
           <span>Precio de venta</span><span>{{ articulo.precio_venta | moneda }}</span>
         </div>
         <div class="d-flex justify-content-between py-1">
-          <span>Margen</span>
+          <span>Margen estimado</span>
           <strong class="{{ 'text-danger' if margen is not none and margen < 20 else 'text-success' }}">
             {{ margen ~ '%' if margen is not none else '—' }}
           </strong>
@@ -113,6 +115,16 @@
         <div class="d-flex justify-content-between border-top py-1 mt-1">
           <span>Stock</span><span>{{ articulo.stock }} {{ articulo.unidad }}</span>
         </div>
+        {% endif %}
+        {% if elaborado %}
+        <p class="text-muted mb-0 mt-2">
+          Estimado con el costo actual de cada insumo (no el costo histórico por lote).
+          Se actualiza al registrar compras.
+        </p>
+        {% elif not articulo.precio_costo %}
+        <p class="text-warning mb-0 mt-2">
+          Cargá el precio de costo para ver el margen real.
+        </p>
         {% endif %}
       </div>
     </div>
