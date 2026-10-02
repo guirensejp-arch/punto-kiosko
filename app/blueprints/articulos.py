@@ -83,21 +83,86 @@ def nuevo():
             flash('El precio no es un monto válido.', 'danger')
             return render_template('articulos/nuevo.html', form=form)
 
+        try:
+            costo = parsear_centavos(form.precio_costo.data) if form.precio_costo.data else 0
+        except ValueError:
+            flash('El precio de costo no es un monto válido.', 'danger')
+            return render_template('articulos/nuevo.html', form=form)
+
+        sku = (form.sku.data or '').strip() or None
+        if sku and Articulo.query.filter_by(sku=sku).first():
+            flash(f'Ya existe un artículo con el SKU {sku}.', 'danger')
+            return render_template('articulos/nuevo.html', form=form)
+
+        codigo = (form.codigo_barras.data or '').strip() or None
+        if codigo and CodigoBarras.query.filter_by(codigo=codigo).first():
+            flash(f'El código de barras {codigo} ya está en uso.', 'danger')
+            return render_template('articulos/nuevo.html', form=form)
+
+        stock = parsear_decimal(form.stock.data) if form.stock.data else 0
+        elaborado = form.tipo.data == 'ELABORADO'
         articulo = Articulo(
             nombre=form.nombre.data.strip(),
             descripcion=(form.descripcion.data or '').strip() or None,
             categoria=form.categoria.data or None,
+            sku=sku,
             precio_venta=precio,
+            precio_costo=costo,
+            stock_propio=not elaborado,
+            stock=stock or 0,
+            unidad=form.unidad.data or 'ud',
             margen_objetivo=form.margen_objetivo.data,
             activo=form.activo.data,
         )
         db.session.add(articulo)
+        db.session.flush()
+        if codigo:
+            db.session.add(CodigoBarras(codigo=codigo, articulo_id=articulo.id))
+
+        # Inserta insumos si se cargaron filas (solo para elaborados).
+        errores_insumos = []
+        if elaborado:
+            errores_insumos = _guardar_insumos_nuevos(articulo)
+
         db.session.commit()
-        registrar('CREAR_PRODUCTO', 'articulo', articulo.id)
-        flash('Articulo creado. Ahora cargá los insumos de la receta.', 'success')
+        registrar('CREAR_ARTICULO', 'articulo', articulo.id)
+        if errores_insumos:
+            flash('Artículo creado. ' + ' '.join(errores_insumos), 'warning')
+        else:
+            flash('Artículo creado.', 'success')
         return redirect(url_for('articulos.detalle', articulo_id=articulo.id))
 
-    return render_template('articulos/nuevo.html', form=form)
+    return render_template(
+        'articulos/nuevo.html', form=form, insumos=_insumos_activos()
+    )
+
+
+def _guardar_insumos_nuevos(articulo):
+    """Lee las filas dinámicas de insumos del request y las asocia al artículo."""
+    errores = []
+    insumo_ids = request.form.getlist('insumo_id')
+    cantidades = request.form.getlist('insumo_cantidad')
+    unidades = request.form.getlist('insumo_unidad')
+    for i, insumo_id in enumerate(insumo_ids):
+        if not insumo_id:
+            continue
+        insumo = db.session.get(Insumo, int(insumo_id))
+        if insumo is None or not insumo.activo:
+            errores.append('Un insumo no existe o está inactivo.')
+            continue
+        cantidad = parsear_decimal(cantidades[i] if i < len(cantidades) else '')
+        unidad = unidades[i] if i < len(unidades) else insumo.unidad
+        if cantidad is None or cantidad <= 0:
+            errores.append(f'Cantidad inválida para {insumo.nombre}.')
+            continue
+        if convertir(cantidad, unidad, insumo.unidad) is None:
+            errores.append(f'Unidad incompatible en {insumo.nombre}.')
+            continue
+        db.session.add(ArticuloInsumo(
+            articulo_id=articulo.id, insumo_id=insumo.id,
+            cantidad=cantidad, unidad=unidad,
+        ))
+    return errores
 
 
 @articulos_bp.route('/<int:articulo_id>')
@@ -105,7 +170,10 @@ def nuevo():
 def detalle(articulo_id):
     articulo = db.get_or_404(Articulo, articulo_id)
     form = ProductoForm(obj=articulo)
+    form.tipo.data = 'ELABORADO' if (not articulo.stock_propio and articulo.insumos) else 'DIRECTO'
     form.precio_venta.data = centavos_a_editable(articulo.precio_venta)
+    form.precio_costo.data = centavos_a_editable(articulo.precio_costo or 0)
+    form.codigo_barras.data = articulo.codigos[0].codigo if articulo.codigos else ''
 
     linea_form = ProductoInsumoForm()
     linea_form.insumo_id.choices = [(i.id, f'{i.nombre} ({i.unidad})') for i in _insumos_activos()]
@@ -134,16 +202,46 @@ def guardar(articulo_id):
             flash('El precio no es un monto válido.', 'danger')
             return redirect(url_for('articulos.detalle', articulo_id=articulo.id))
 
+        sku = (form.sku.data or '').strip() or None
+        if sku:
+            existente = Articulo.query.filter_by(sku=sku).first()
+            if existente and existente.id != articulo.id:
+                flash(f'Ya existe otro artículo con el SKU {sku}.', 'danger')
+                return redirect(url_for('articulos.detalle', articulo_id=articulo.id))
+
         articulo.nombre = form.nombre.data.strip()
         articulo.descripcion = (form.descripcion.data or '').strip() or None
         articulo.categoria = form.categoria.data or None
-        articulo.margen_objetivo = form.margen_objetivo.data
+        articulo.sku = sku
+        try:
+            articulo.precio_costo = parsear_centavos(form.precio_costo.data) if form.precio_costo.data else 0
+        except ValueError:
+            flash('El precio de costo no es válido.', 'danger')
+            return redirect(url_for('articulos.detalle', articulo_id=articulo.id))
+        articulo.unidad = form.unidad.data or 'ud'
+        articulo.stock_propio = form.tipo.data != 'ELABORADO'
+        if articulo.stock_propio and form.stock.data:
+            valor = parsear_decimal(form.stock.data)
+            if valor is not None:
+                articulo.stock = valor
         articulo.activo = form.activo.data
+
+        codigo = (form.codigo_barras.data or '').strip() or None
+        actual = articulo.codigos[0] if articulo.codigos else None
+        if codigo != (actual.codigo if actual else None):
+            if codigo and CodigoBarras.query.filter_by(codigo=codigo).first():
+                flash(f'El código de barras {codigo} ya está en uso.', 'danger')
+                return redirect(url_for('articulos.detalle', articulo_id=articulo.id))
+            if actual is not None:
+                db.session.delete(actual)
+            if codigo:
+                db.session.add(CodigoBarras(codigo=codigo, articulo_id=articulo.id))
+
         db.session.commit()
-        registrar('EDITAR_PRODUCTO', 'articulo', articulo.id)
-        flash('Articulo actualizado.', 'success')
+        registrar('EDITAR_ARTICULO', 'articulo', articulo.id)
+        flash('Artículo actualizado.', 'success')
     else:
-        flash('Revisá los datos del articulo.', 'danger')
+        flash('Revisá los datos del artículo.', 'danger')
 
     return redirect(url_for('articulos.detalle', articulo_id=articulo.id))
 

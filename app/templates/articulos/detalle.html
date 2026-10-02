@@ -32,7 +32,7 @@
     <div class="card mb-3">
       <div class="card-header">Datos del artículo</div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('articulos.guardar', articulo_id=articulo.id) }}" novalidate>
+        <form method="post" action="{{ url_for('articulos.guardar', articulo_id=articulo.id) }}" novalidate id="form-articulo">
           {{ form.hidden_tag() }}
           <div class="row g-2">
             <div class="col-12">
@@ -40,27 +40,50 @@
               {{ form.nombre(class="form-control") }}
               {% for error in form.nombre.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
             </div>
+            <div class="col-6">
+              {{ form.categoria.label(class="form-label") }}
+              {{ form.categoria(class="form-select") }}
+            </div>
+            <div class="col-6">
+              {{ form.sku.label(class="form-label") }}
+              {{ form.sku(class="form-control") }}
+            </div>
             <div class="col-12">
-              {{ form.descripcion.label(class="form-label") }}
-              {{ form.descripcion(class="form-control", rows="2") }}
-              {% for error in form.descripcion.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+              {{ form.codigo_barras.label(class="form-label") }}
+              {{ form.codigo_barras(class="form-control", placeholder="779…") }}
+              {% for error in form.codigo_barras.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-6">
+              {{ form.precio_costo.label(class="form-label") }}
+              {{ form.precio_costo(class="form-control") }}
             </div>
             <div class="col-6">
               {{ form.precio_venta.label(class="form-label") }}
               {{ form.precio_venta(class="form-control") }}
               {% for error in form.precio_venta.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
             </div>
-            <div class="col-6">
-              {{ form.categoria.label(class="form-label") }}
-              {{ form.categoria(class="form-select") }}
+            <div class="col-12">
+              <label class="form-label">Margen</label>
+              <div class="form-control bg-body-secondary" id="margen-vivo">—</div>
             </div>
-            <div class="col-6">
-              {{ form.margen_objetivo.label(class="form-label") }}
-              {{ form.margen_objetivo(class="form-control") }}
-              {% for error in form.margen_objetivo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            <div class="col-12">
+              {{ form.tipo.label(class="form-label") }}
+              {{ form.tipo(class="form-select", id="tipo") }}
             </div>
-            <div class="col-6 d-flex align-items-end">
-              <div class="form-check form-switch mb-2">
+            <div class="col-6" id="bloque-stock">
+              {{ form.stock.label(class="form-label") }}
+              {{ form.stock(class="form-control") }}
+            </div>
+            <div class="col-6" id="bloque-unidad">
+              {{ form.unidad.label(class="form-label") }}
+              {{ form.unidad(class="form-select") }}
+            </div>
+            <div class="col-12">
+              {{ form.descripcion.label(class="form-label") }}
+              {{ form.descripcion(class="form-control", rows="2") }}
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
                 {{ form.activo(class="form-check-input") }}
                 {{ form.activo.label(class="form-check-label") }}
               </div>
@@ -72,22 +95,24 @@
     </div>
 
     <div class="card">
-      <div class="card-header">Food cost</div>
+      <div class="card-header">Rentabilidad</div>
       <div class="card-body small">
         <div class="d-flex justify-content-between border-bottom py-1">
-          <span>Costo total insumos</span><strong>{{ costo | moneda }}</strong>
+          <span>Precio de costo</span><span>{{ (articulo.precio_costo or 0) | moneda }}</span>
         </div>
         <div class="d-flex justify-content-between border-bottom py-1">
-          <span>Precio venta</span><span>{{ articulo.precio_venta | moneda }}</span>
+          <span>Precio de venta</span><span>{{ articulo.precio_venta | moneda }}</span>
         </div>
         <div class="d-flex justify-content-between py-1">
-          <span>Margen bruto</span>
-          <strong class="{{ 'text-danger' if margen is not none and margen < 30 else 'text-success' }}">
+          <span>Margen</span>
+          <strong class="{{ 'text-danger' if margen is not none and margen < 20 else 'text-success' }}">
             {{ margen ~ '%' if margen is not none else '—' }}
           </strong>
         </div>
-        {% if articulo.margen_objetivo %}
-        <div class="text-muted mt-1">Objetivo: {{ articulo.margen_objetivo }}%</div>
+        {% if articulo.stock_propio %}
+        <div class="d-flex justify-content-between border-top py-1 mt-1">
+          <span>Stock</span><span>{{ articulo.stock }} {{ articulo.unidad }}</span>
+        </div>
         {% endif %}
       </div>
     </div>
@@ -160,10 +185,54 @@
           {% for error in linea_form.insumo_id.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
           {% for error in linea_form.cantidad.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
         </form>
-        <div class="form-text">La unidad se convierte automáticamente (g↔kg, ml↔l) para sumar el food cost.</div>
+        <div class="form-text">La unidad se convierte automáticamente (g↔kg, ml↔l) para sumar el costo.</div>
       </div>
       {% endif %}
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var costo = document.getElementById('precio_costo');
+    var venta = document.getElementById('precio_venta');
+    var salida = document.getElementById('margen-vivo');
+    var tipo = document.getElementById('tipo');
+    var bloqueStock = document.getElementById('bloque-stock');
+    var bloqueUnidad = document.getElementById('bloque-unidad');
+
+    function aNumero(txt) {
+      txt = (txt || '').replace(/[^\d,.-]/g, '');
+      if (!txt) return 0;
+      if (txt.indexOf(',') !== -1) txt = txt.replace(/\./g, '').replace(',', '.');
+      else txt = txt.replace(/\./g, '');
+      var n = parseFloat(txt);
+      return isNaN(n) ? 0 : n;
+    }
+
+    function actualizarMargen() {
+      var v = aNumero(venta.value);
+      var c = (tipo && tipo.value === 'ELABORADO') ? ({{ costo or 0 }} / 100) : aNumero(costo.value);
+      if (!v) { salida.textContent = '—'; return; }
+      var margen = v - c;
+      var pct = Math.round(margen * 100 / v);
+      salida.textContent = '$ ' + margen.toLocaleString('es-AR') + '  (' + pct + '%)';
+      salida.className = 'form-control ' + (pct < 20 ? 'text-danger' : 'text-success');
+    }
+
+    function actualizarTipo() {
+      var elaborado = tipo.value === 'ELABORADO';
+      bloqueStock.style.display = elaborado ? 'none' : '';
+      bloqueUnidad.style.display = elaborado ? 'none' : '';
+    }
+
+    costo.addEventListener('input', actualizarMargen);
+    venta.addEventListener('input', actualizarMargen);
+    tipo.addEventListener('change', actualizarTipo);
+    actualizarMargen();
+    actualizarTipo();
+  })();
+</script>
 {% endblock %}

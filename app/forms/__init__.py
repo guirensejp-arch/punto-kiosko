@@ -33,12 +33,14 @@ UNIDADES_CHOICES = [
 
 CATEGORIAS_CHOICES = [
     ('', 'Sin categoría'),
-    ('Hamburguesas', 'Hamburguesas'),
-    ('Al plato', 'Al plato'),
-    ('Sándwiches', 'Sándwiches'),
-    ('Acompañamientos', 'Acompañamientos'),
     ('Bebidas', 'Bebidas'),
-    ('Postres', 'Postres'),
+    ('Golosinas', 'Golosinas'),
+    ('Snacks', 'Snacks'),
+    ('Cigarrillos', 'Cigarrillos'),
+    ('Almacén', 'Almacén'),
+    ('Kiosco', 'Kiosco'),
+    ('Limpieza', 'Limpieza'),
+    ('Perfumería', 'Perfumería'),
 ]
 
 
@@ -142,8 +144,20 @@ class ProductoForm(FlaskForm):
     nombre = StringField('Nombre', validators=[DataRequired(), Length(max=100)])
     descripcion = TextAreaField('Descripción', validators=[Optional(), Length(max=255)])
     categoria = SelectField('Categoría', choices=CATEGORIAS_CHOICES)
+    sku = StringField('SKU / código interno', validators=[Optional(), Length(max=50)])
+    codigo_barras = StringField('Código de barras', validators=[Optional(), Length(max=50)])
+    tipo = SelectField(
+        'Cómo se maneja',
+        choices=[
+            ('DIRECTO', 'Vendo directo (llevo stock de este artículo)'),
+            ('ELABORADO', 'Lo elaboro con insumos (receta)'),
+        ],
+    )
     # Se carga como texto ("$ 8.900" o "8900") y se convierte a centavos.
     precio_venta = StringField('Precio de venta', validators=[DataRequired(), Length(max=30)])
+    precio_costo = StringField('Precio de costo', validators=[Optional(), Length(max=30)])
+    stock = StringField('Stock', validators=[Optional(), Length(max=20)])
+    unidad = SelectField('Unidad', choices=UNIDADES_CHOICES, default='ud')
     margen_objetivo = IntegerField(
         'Margen objetivo (%)',
         validators=[Optional(), NumberRange(min=0, max=100)],

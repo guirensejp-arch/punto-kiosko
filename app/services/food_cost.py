@@ -23,7 +23,13 @@ def costo_linea(linea):
 
 
 def costo_producto(articulo):
-    """Food cost total del articulo, en centavos."""
+    """Costo del artículo en centavos.
+
+    Para artículos de reventa (``stock_propio``) o sin insumos, es el
+    ``precio_costo`` cargado. Para elaborados, es la suma de sus insumos.
+    """
+    if articulo.stock_propio or not articulo.insumos:
+        return int(articulo.precio_costo or 0)
     return sum(costo_linea(linea) for linea in articulo.insumos)
 
 
