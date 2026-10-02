@@ -25,7 +25,10 @@
   var errorEl = document.getElementById('pos-error');
   var efectivoBloque = document.getElementById('pos-efectivo-bloque');
 
-  var lineas = [];  // [{ id, nombre, precio, cantidad }]
+  var lineas = [];  // [{ id, nombre, precio, cantidad, pesable }]
+
+  var scanCfg = (cfg.scan) || { ms: 120, cantidad: 1, terminador: 'ENTER', prefijoBalanza: '2' };
+  var cantDefault = scanCfg.cantidad || 1;
 
   var fmt = new Intl.NumberFormat('es-AR');
 
@@ -125,11 +128,11 @@
   function agregar(articulo) {
     var existente = lineas.filter(function (l) { return l.id === articulo.id; })[0];
     if (existente) {
-      if (!existente.pesable) existente.cantidad += 1;
+      if (!existente.pesable) existente.cantidad += cantDefault;
     } else {
       lineas.push({
         id: articulo.id, nombre: articulo.nombre, precio: articulo.precio,
-        cantidad: articulo.es_pesable ? 0.25 : 1,
+        cantidad: articulo.es_pesable ? 0.25 : cantDefault,
         pesable: !!articulo.es_pesable, unidad: articulo.unidad,
       });
     }
@@ -233,7 +236,7 @@
     }
     if (ev.key.length === 1) {
       var ahora = Date.now();
-      if (ahora - ultimo > 120) buf = '';  // tecleo humano lento
+      if (ahora - ultimo > (scanCfg.ms || 120)) buf = '';  // tecleo humano lento
       buf += ev.key;
       ultimo = ahora;
     }

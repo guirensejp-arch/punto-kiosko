@@ -14,6 +14,11 @@ class Configuracion(db.Model):
     modo_oscuro = db.Column(db.Boolean, default=False, nullable=False)
     font_size = db.Column(db.String(20), default='MEDIANO', nullable=False)
     impresora_termica = db.Column(db.String(100))
+    # Lector de código de barras (HID / keyboard wedge).
+    scan_terminador = db.Column(db.String(10), default='ENTER', nullable=False)
+    scan_ms_entre_teclas = db.Column(db.Integer, default=120, nullable=False)
+    scan_cantidad = db.Column(db.Integer, default=1, nullable=False)
+    scan_prefijo_balanza = db.Column(db.String(5), default='2', nullable=False)
 
     @classmethod
     def get(cls):

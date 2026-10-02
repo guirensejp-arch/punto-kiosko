@@ -35,7 +35,31 @@
             {% endfor %}
           </div>
 
-          <button type="submit" class="btn btn-primary">
+          <h2 class="h6 text-muted mt-3">Lector de código de barras</h2>
+          <p class="form-text mt-0 mb-2">
+            Los lectores USB/Bluetooth tipo HID funcionan sin instalar nada (escriben el código y envían
+            un terminador). Estos ajustes controlan cómo lo interpreta el punto de venta.
+          </p>
+          <div class="row g-2">
+            <div class="col-6">
+              {{ form.scan_terminador.label(class="form-label small mb-1") }}
+              {{ form.scan_terminador(class="form-select form-select-sm") }}
+            </div>
+            <div class="col-6">
+              {{ form.scan_ms_entre_teclas.label(class="form-label small mb-1") }}
+              {{ form.scan_ms_entre_teclas(class="form-control form-control-sm", placeholder="120") }}
+            </div>
+            <div class="col-6">
+              {{ form.scan_cantidad.label(class="form-label small mb-1") }}
+              {{ form.scan_cantidad(class="form-control form-control-sm", placeholder="1") }}
+            </div>
+            <div class="col-6">
+              {{ form.scan_prefijo_balanza.label(class="form-label small mb-1") }}
+              {{ form.scan_prefijo_balanza(class="form-control form-control-sm", placeholder="2") }}
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary mt-3">
             <i class="bi bi-save"></i> Guardar configuración
           </button>
         </form>
@@ -45,21 +69,6 @@
 
   <div class="col-12 col-lg-5">
     <div class="card">
-      <div class="card-header">Branding del cliente</div>
-      <div class="card-body small">
-        <p class="mb-2">Se edita en <code>branding.yaml</code> (sin tocar código).</p>
-        <ul class="list-unstyled mb-0">
-          <li><span class="text-muted">Negocio:</span> {{ branding.negocio.nombre }} {{ branding.negocio.emoji }}</li>
-          <li><span class="text-muted">Orden de marca:</span> {{ branding.negocio.orden }}</li>
-          <li><span class="text-muted">Articulo:</span> {{ branding.leudar.producto }}</li>
-          <li><span class="text-muted">Marca de agua:</span> {{ 'sí' if branding.leudar.marca_agua else 'no' }}</li>
-          <li><span class="text-muted">Color primario:</span> {{ branding.colores.primario }}</li>
-          <li><span class="text-muted">Color secundario:</span> {{ branding.colores.secundario }}</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="card mt-3">
       <div class="card-header">Métodos de pago</div>
       <div class="card-body">
         <ul class="list-group list-group-flush mb-3">

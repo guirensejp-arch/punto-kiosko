@@ -91,6 +91,22 @@ class ConfiguracionForm(FlaskForm):
         'Impresora térmica',
         validators=[Optional(), Length(max=100)],
     )
+    scan_terminador = SelectField(
+        'Terminador del lector',
+        choices=[('ENTER', 'Enter'), ('TAB', 'Tab'), ('NINGUNO', 'Ninguno (por tiempo)')],
+    )
+    scan_ms_entre_teclas = IntegerField(
+        'Tiempo entre caracteres (ms)',
+        validators=[Optional(), NumberRange(min=20, max=1000)],
+    )
+    scan_cantidad = IntegerField(
+        'Cantidad por defecto al escanear',
+        validators=[Optional(), NumberRange(min=1, max=999)],
+    )
+    scan_prefijo_balanza = StringField(
+        'Prefijo de balanza (pesables)',
+        validators=[Optional(), Length(max=5)],
+    )
 
 
 # ---------------------------------------------------------------------------

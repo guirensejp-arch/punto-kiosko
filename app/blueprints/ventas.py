@@ -94,6 +94,12 @@ def nueva():
         turno=caja_service.turno_abierto(),
         metodos=MetodoPago.query.filter_by(activo=True).order_by(MetodoPago.nombre).all(),
         promociones=promocion_service.promociones_vigentes(),
+        scan={
+            'terminador': config.scan_terminador,
+            'ms': config.scan_ms_entre_teclas or 120,
+            'cantidad': config.scan_cantidad or 1,
+            'prefijo_balanza': config.scan_prefijo_balanza or '2',
+        },
     )
 
 

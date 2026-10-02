@@ -75,7 +75,13 @@
   window.POS = {
     buscarUrl: "{{ url_for('ventas.buscar') }}",
     cobrarUrl: "{{ url_for('ventas.cobrar') }}",
-    csrf: "{{ csrf_token() }}"
+    csrf: "{{ csrf_token() }}",
+    scan: {
+      terminador: "{{ scan.terminador }}",
+      ms: {{ scan.ms }},
+      cantidad: {{ scan.cantidad }},
+      prefijoBalanza: "{{ scan.prefijo_balanza }}"
+    }
   };
 </script>
 {% endblock %}
