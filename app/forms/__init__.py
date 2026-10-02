@@ -96,15 +96,6 @@ class ConfiguracionForm(FlaskForm):
 # ---------------------------------------------------------------------------
 
 
-class ClienteForm(FlaskForm):
-    nombre = StringField('Nombre', validators=[DataRequired(), Length(max=100)])
-    apellido = StringField('Apellido', validators=[Optional(), Length(max=100)])
-    telefono = StringField('Teléfono', validators=[DataRequired(), Length(max=50)])
-    direccion = StringField('Dirección', validators=[Optional(), Length(max=200)])
-    notas = TextAreaField('Notas', validators=[Optional(), Length(max=1000)])
-    activo = BooleanField('Activo', default=True)
-
-
 class ProveedorForm(FlaskForm):
     nombre = StringField('Nombre', validators=[DataRequired(), Length(max=100)])
     rubro = StringField('Rubro', validators=[DataRequired(), Length(max=50)])

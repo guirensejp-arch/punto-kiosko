@@ -26,7 +26,6 @@ def create_app(config_name='default'):
     from app.blueprints.analitica import analitica_bp
     from app.blueprints.auth import auth_bp
     from app.blueprints.caja import caja_bp
-    from app.blueprints.clientes import clientes_bp
     from app.blueprints.insumos import insumos_bp
     from app.blueprints.inventario import inventario_bp
     from app.blueprints.main import main_bp
@@ -41,7 +40,6 @@ def create_app(config_name='default'):
     app.register_blueprint(main_bp)
     app.register_blueprint(sistema_bp)
     app.register_blueprint(usuarios_bp)
-    app.register_blueprint(clientes_bp)
     app.register_blueprint(proveedores_bp)
     app.register_blueprint(insumos_bp)
     app.register_blueprint(articulos_bp)

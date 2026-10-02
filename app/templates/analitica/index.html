@@ -247,65 +247,9 @@
 </div>
 
 <div class="row g-3 mb-3">
-  <div class="col-12 col-lg-5">
-    <div class="card h-100">
-      <div class="card-header">Clientes</div>
-      <div class="card-body">
-        <div class="row g-2 text-center mb-3">
-          <div class="col-4"><div class="h5 mb-0">{{ datos.clientes.compradores }}</div><div class="text-muted small">Compraron</div></div>
-          <div class="col-4"><div class="h5 mb-0">{{ datos.clientes.nuevos }}</div><div class="text-muted small">Nuevos</div></div>
-          <div class="col-4"><div class="h5 mb-0">{{ datos.clientes.recurrentes }}</div><div class="text-muted small">Recurrentes</div></div>
-        </div>
-        <div class="d-flex justify-content-between small">
-          <span class="text-muted">Pedidos del período</span><span>{{ datos.clientes.ventas }}</span>
-        </div>
-        <div class="d-flex justify-content-between small">
-          <span class="text-muted">Facturación</span><span>{{ datos.clientes.facturacion | moneda }}</span>
-        </div>
-        <div class="d-flex justify-content-between small">
-          <span class="text-muted">Ticket promedio</span><span>{{ datos.clientes.ticket_promedio | moneda }}</span>
-        </div>
-        {% if not datos.clientes.comparable_nuevos %}
-        <p class="text-muted small mt-2 mb-0">
-          En Histórico o con rango abierto no se distingue "cliente nuevo": todos los compradores figuran como nuevos.
-        </p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-lg-7">
-    <div class="card h-100">
-      <div class="card-header">Top clientes</div>
-      <div class="table-responsive">
-        <table class="table table-sm mb-0 align-middle">
-          <thead><tr><th>Cliente</th><th class="text-end">Pedidos</th><th class="text-end">Facturación</th><th class="text-end">Ticket prom.</th></tr></thead>
-          <tbody>
-            {% for fila in datos.clientes.top %}
-            <tr>
-              <td>{{ fila.cliente.nombre_completo if fila.cliente else '—' }}</td>
-              <td class="text-end">{{ fila.ventas }}</td>
-              <td class="text-end">{{ fila.facturacion | moneda }}</td>
-              <td class="text-end">{{ fila.ticket | moneda }}</td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="4">
-                <div class="empty-state">
-                  <i class="bi bi-people empty-state-icono"></i>
-                  <span class="empty-state-texto">Sin datos.</span>
-                </div>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card mb-3">
-  <div class="card-header">Caja y flujo del período</div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">Caja y flujo del período</div>
   <div class="card-body">
     <div class="row g-2 text-center mb-3">
       <div class="col-6 col-md-3"><div class="h6 mb-0">{{ datos.caja.ventas | moneda }}</div><div class="text-muted small">Ventas de caja</div></div>

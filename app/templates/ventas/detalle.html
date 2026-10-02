@@ -70,7 +70,6 @@
         <div><span class="text-muted">Nombre:</span> {{ venta.cliente.nombre_completo }}</div>
         <div><span class="text-muted">Teléfono:</span> {{ venta.cliente.telefono | telefono }}</div>
         <div><span class="text-muted">Compras previas:</span> {{ venta.cliente.ventas | length }}</div>
-        <a href="{{ url_for('clientes.detalle', cliente_id=venta.cliente.id) }}" class="btn btn-sm btn-outline-secondary mt-2">Ver historial de cliente</a>
         {% else %}
         <div class="text-muted">Venta ocasional (sin cliente).</div>
         {% endif %}
