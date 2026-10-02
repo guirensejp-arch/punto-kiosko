@@ -34,6 +34,7 @@ from app.models.venta import (
 from app.services import caja_service, promocion_service, venta_service
 from app.services.phone_normalizer import normalize_phone
 from app.utils.auditoria import registrar
+from app.utils.numeros import parsear_decimal
 
 ventas_bp = Blueprint('ventas', __name__, url_prefix='/ventas')
 
@@ -143,6 +144,8 @@ def _serializar(articulo):
         'precio': articulo.precio_venta,
         'stock': float(articulo.stock) if articulo.stock is not None else None,
         'stock_propio': articulo.stock_propio,
+        'es_pesable': articulo.es_pesable,
+        'unidad': articulo.unidad,
         'codigos': [c.codigo for c in articulo.codigos if c.activo],
     }
 
@@ -212,15 +215,17 @@ def _parsear_lineas(crudas):
     for item in crudas:
         articulo_id = item.get('articulo_id')
         cantidad = item.get('cantidad')
-        if not articulo_id or not cantidad:
+        if not articulo_id or cantidad in (None, ''):
             continue
         articulo = db.session.get(Articulo, int(articulo_id))
         if articulo is None or not articulo.activo:
             raise ValueError('Hay un artículo inválido o inactivo.')
-        cantidad = int(cantidad)
-        if cantidad <= 0:
+        cant = parsear_decimal(str(cantidad))
+        if cant is not None and not articulo.es_pesable:
+            cant = cant.to_integral_value()
+        if cant is None or cant <= 0:
             raise ValueError(f'Cantidad inválida para {articulo.nombre}.')
-        lineas.append((articulo, cantidad))
+        lineas.append((articulo, cant))
     if not lineas:
         raise ValueError('Agregá al menos un artículo.')
     return lineas

@@ -82,7 +82,7 @@ class VentaDetalle(db.Model):
     articulo_id = db.Column(
         db.Integer, db.ForeignKey('articulo.id'), nullable=False, index=True
     )
-    cantidad = db.Column(db.Integer, nullable=False)
+    cantidad = db.Column(db.Numeric(12, 3), nullable=False)
     precio_unitario = db.Column(db.Integer, nullable=False)  # (centavos) congelado
     subtotal = db.Column(db.Integer, nullable=False)  # (centavos)
 

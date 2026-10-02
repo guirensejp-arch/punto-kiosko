@@ -25,6 +25,7 @@ class Articulo(db.Model):
     precio_costo = db.Column(db.Integer, default=0, nullable=False)  # (centavos)
     margen_objetivo = db.Column(db.Integer)  # porcentaje informativo
     stock_propio = db.Column(db.Boolean, default=False, nullable=False)
+    es_pesable = db.Column(db.Boolean, default=False, nullable=False)  # precio por kg/l
     stock = db.Column(db.Numeric(12, 3), default=0, nullable=False)
     unidad = db.Column(db.String(20), default='ud', nullable=False)
     activo = db.Column(db.Boolean, default=True, nullable=False)  # soft-delete

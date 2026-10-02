@@ -78,6 +78,13 @@
               {{ form.unidad.label(class="form-label") }}
               {{ form.unidad(class="form-select") }}
             </div>
+            <div class="col-12" id="bloque-pesable">
+              <div class="form-check">
+                {{ form.es_pesable(class="form-check-input") }}
+                {{ form.es_pesable.label(class="form-check-label") }}
+                <div class="form-text">El precio se carga por kg (o por litro). En el POS se ingresa el peso.</div>
+              </div>
+            </div>
             <div class="col-12">
               {{ form.descripcion.label(class="form-label") }}
               {{ form.descripcion(class="form-control", rows="2") }}
@@ -214,6 +221,7 @@
     var tipo = document.getElementById('tipo');
     var bloqueStock = document.getElementById('bloque-stock');
     var bloqueUnidad = document.getElementById('bloque-unidad');
+    var bloquePesable = document.getElementById('bloque-pesable');
 
     function aNumero(txt) {
       txt = (txt || '').replace(/[^\d,.-]/g, '');
@@ -238,6 +246,7 @@
       var elaborado = tipo.value === 'ELABORADO';
       bloqueStock.style.display = elaborado ? 'none' : '';
       bloqueUnidad.style.display = elaborado ? 'none' : '';
+      if (bloquePesable) bloquePesable.style.display = elaborado ? 'none' : '';
     }
 
     costo.addEventListener('input', actualizarMargen);

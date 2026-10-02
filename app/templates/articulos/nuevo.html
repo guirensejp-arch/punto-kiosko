@@ -63,6 +63,13 @@
               {{ form.unidad.label(class="form-label") }}
               {{ form.unidad(class="form-select") }}
             </div>
+            <div class="col-12" id="bloque-pesable">
+              <div class="form-check">
+                {{ form.es_pesable(class="form-check-input") }}
+                {{ form.es_pesable.label(class="form-check-label") }}
+                <div class="form-text">Ej.: jamón, queso, granel. El precio se carga por kg (o por litro).</div>
+              </div>
+            </div>
 
             <div class="col-12">
               {{ form.descripcion.label(class="form-label") }}
@@ -132,6 +139,7 @@
     var tipo = document.getElementById('tipo');
     var bloqueStock = document.getElementById('bloque-stock');
     var bloqueUnidad = document.getElementById('bloque-unidad');
+    var bloquePesable = document.getElementById('bloque-pesable');
     var bloqueInsumos = document.getElementById('bloque-insumos');
     var filas = document.getElementById('filas-insumos');
     var plantilla = document.getElementById('plantilla-insumo');
@@ -157,6 +165,7 @@
       var elaborado = tipo.value === 'ELABORADO';
       bloqueStock.style.display = elaborado ? 'none' : '';
       bloqueUnidad.style.display = elaborado ? 'none' : '';
+      if (bloquePesable) bloquePesable.style.display = elaborado ? 'none' : '';
       bloqueInsumos.style.display = elaborado ? '' : 'none';
       if (elaborado && !filas.querySelector('.fila-insumo')) agregarFila();
     }

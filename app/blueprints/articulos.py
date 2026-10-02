@@ -109,6 +109,7 @@ def nuevo():
             precio_venta=precio,
             precio_costo=costo,
             stock_propio=not elaborado,
+            es_pesable=(form.es_pesable.data and not elaborado),
             stock=stock or 0,
             unidad=form.unidad.data or 'ud',
             margen_objetivo=form.margen_objetivo.data,
@@ -220,6 +221,7 @@ def guardar(articulo_id):
             return redirect(url_for('articulos.detalle', articulo_id=articulo.id))
         articulo.unidad = form.unidad.data or 'ud'
         articulo.stock_propio = form.tipo.data != 'ELABORADO'
+        articulo.es_pesable = form.es_pesable.data and articulo.stock_propio
         if articulo.stock_propio and form.stock.data:
             valor = parsear_decimal(form.stock.data)
             if valor is not None:

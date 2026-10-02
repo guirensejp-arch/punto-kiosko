@@ -158,6 +158,7 @@ class ProductoForm(FlaskForm):
     precio_costo = StringField('Precio de costo', validators=[Optional(), Length(max=30)])
     stock = StringField('Stock', validators=[Optional(), Length(max=20)])
     unidad = SelectField('Unidad', choices=UNIDADES_CHOICES, default='ud')
+    es_pesable = BooleanField('Se vende por peso (precio por kg/l)')
     margen_objetivo = IntegerField(
         'Margen objetivo (%)',
         validators=[Optional(), NumberRange(min=0, max=100)],

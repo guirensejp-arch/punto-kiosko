@@ -73,22 +73,46 @@
     lineas.forEach(function (l) {
       var row = document.createElement('div');
       row.className = 'pos-linea';
-      row.innerHTML =
-        '<span class="pos-linea-nombre"></span>' +
-        '<span class="pos-linea-cant">' +
-          '<button type="button" class="pos-menos" aria-label="Quitar uno">−</button>' +
-          '<span class="tabular"></span>' +
-          '<button type="button" class="pos-mas" aria-label="Agregar uno">+</button>' +
-        '</span>' +
-        '<span class="pos-linea-sub tabular"></span>';
-      row.querySelector('.pos-linea-nombre').textContent = l.nombre;
-      row.querySelector('.pos-linea-cant .tabular').textContent = l.cantidad;
-      row.querySelector('.pos-linea-sub').textContent = moneda(l.precio * l.cantidad);
-      row.querySelector('.pos-menos').addEventListener('click', function () { cambiar(l.id, -1); });
-      row.querySelector('.pos-mas').addEventListener('click', function () { cambiar(l.id, 1); });
+      if (l.pesable) {
+        row.innerHTML =
+          '<span class="pos-linea-nombre"></span>' +
+          '<span class="pos-linea-cant">' +
+            '<input type="number" class="pos-peso form-control form-control-sm" min="0.001" step="0.001">' +
+            '<button type="button" class="pos-menos" aria-label="Quitar">✕</button>' +
+          '</span>' +
+          '<span class="pos-linea-sub tabular"></span>';
+        row.querySelector('.pos-linea-nombre').textContent = l.nombre + ' ($/kg)';
+        var campo = row.querySelector('.pos-peso');
+        campo.value = l.cantidad;
+        campo.addEventListener('input', function () {
+          var v = parseFloat(campo.value);
+          l.cantidad = isNaN(v) || v < 0 ? 0 : v;
+          row.querySelector('.pos-linea-sub').textContent = moneda(l.precio * l.cantidad);
+          actualizarTotales();
+        });
+        row.querySelector('.pos-menos').addEventListener('click', function () { cambiar(l.id, 0, true); });
+      } else {
+        row.innerHTML =
+          '<span class="pos-linea-nombre"></span>' +
+          '<span class="pos-linea-cant">' +
+            '<button type="button" class="pos-menos" aria-label="Quitar uno">−</button>' +
+            '<span class="tabular"></span>' +
+            '<button type="button" class="pos-mas" aria-label="Agregar uno">+</button>' +
+          '</span>' +
+          '<span class="pos-linea-sub tabular"></span>';
+        row.querySelector('.pos-linea-nombre').textContent = l.nombre;
+        row.querySelector('.pos-linea-cant .tabular').textContent = l.cantidad;
+        row.querySelector('.pos-linea-sub').textContent = moneda(l.precio * l.cantidad);
+        row.querySelector('.pos-menos').addEventListener('click', function () { cambiar(l.id, -1); });
+        row.querySelector('.pos-mas').addEventListener('click', function () { cambiar(l.id, 1); });
+      }
       lineasEl.appendChild(row);
     });
 
+    actualizarTotales();
+  }
+
+  function actualizarTotales() {
     var sub = subtotal();
     var tot = total();
     cantidadEl.textContent = lineas.reduce(function (a, l) { return a + l.cantidad; }, 0);
@@ -101,19 +125,27 @@
   function agregar(articulo) {
     var existente = lineas.filter(function (l) { return l.id === articulo.id; })[0];
     if (existente) {
-      existente.cantidad += 1;
+      if (!existente.pesable) existente.cantidad += 1;
     } else {
-      lineas.push({ id: articulo.id, nombre: articulo.nombre, precio: articulo.precio, cantidad: 1 });
+      lineas.push({
+        id: articulo.id, nombre: articulo.nombre, precio: articulo.precio,
+        cantidad: articulo.es_pesable ? 0.25 : 1,
+        pesable: !!articulo.es_pesable, unidad: articulo.unidad,
+      });
     }
     render();
   }
 
-  function cambiar(id, delta) {
+  function cambiar(id, delta, quitar) {
     var l = lineas.filter(function (x) { return x.id === id; })[0];
     if (!l) return;
-    l.cantidad += delta;
-    if (l.cantidad <= 0) {
+    if (quitar) {
       lineas = lineas.filter(function (x) { return x.id !== id; });
+    } else {
+      l.cantidad += delta;
+      if (l.cantidad <= 0) {
+        lineas = lineas.filter(function (x) { return x.id !== id; });
+      }
     }
     render();
   }

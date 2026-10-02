@@ -92,6 +92,13 @@ CATALOGO = [
     ('Gel alcohol 250ml', 'Kiosco', 110000, 70000, 'ud', 30, '7795678006065'),
 ]
 
+# Artículos que se venden por peso (precio por kg). (nombre, categoria, precio_kg, costo_kg, stock_kg)
+PESABLES = [
+    ('Jamón cocido (por kg)', 'Fiambres', 2500000, 1800000, '3.000'),
+    ('Queso fresco (por kg)', 'Fiambres', 2200000, 1600000, '2.500'),
+    ('Salame (por kg)', 'Fiambres', 2800000, 2000000, '1.500'),
+]
+
 # Proveedores e insumos (para artículos elaborados). costo en centavos por unidad.
 PROVEEDORES = [
     ('Fiambrería Don Pedro', 'Fiambres', 'Av. Siempre Viva 123', '381 555-1000'),
@@ -173,6 +180,17 @@ def crear_catalogo():
         if not CodigoBarras.query.filter_by(codigo=codigo).first():
             db.session.add(CodigoBarras(codigo=codigo, articulo_id=art.id))
         articulos.append((art, stock))
+    # Pesables (precio por kg, stock en kg, sin código de barras).
+    for nombre, categoria, precio, costo, stock in PESABLES:
+        art = Articulo.query.filter_by(nombre=nombre).first()
+        if art is None:
+            art = Articulo(nombre=nombre, categoria=categoria,
+                           precio_venta=precio, precio_costo=costo,
+                           stock_propio=True, es_pesable=True,
+                           stock=Decimal('0'), unidad='kg', activo=True)
+            db.session.add(art)
+            db.session.flush()
+        articulos.append((art, Decimal(stock)))
     db.session.commit()
     return articulos
 

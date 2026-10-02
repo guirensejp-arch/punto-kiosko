@@ -80,11 +80,20 @@ def crear_venta(
     """Confirma una venta completa (la transacción y el commit son del caller)."""
     if not lineas:
         raise ValueError('La venta no tiene artículos.')
+    lineas = [
+        (articulo, Decimal(str(cantidad)))
+        for articulo, cantidad in lineas
+    ]
     for articulo, cantidad in lineas:
         if cantidad is None or cantidad <= 0:
             raise ValueError(f'Cantidad inválida para {articulo.nombre}.')
+        if not articulo.es_pesable and cantidad != cantidad.to_integral_value():
+            raise ValueError(f'{articulo.nombre} se vende por unidad, no por peso.')
 
-    subtotal = sum(articulo.precio_venta * cantidad for articulo, cantidad in lineas)
+    # Subtotal por línea redondeado a centavos (los pesables pueden dar decimal).
+    subtotal = sum(
+        int(round(articulo.precio_venta * cantidad)) for articulo, cantidad in lineas
+    )
     if descuento < 0 or descuento > subtotal:
         raise ValueError('El descuento no puede superar el subtotal.')
     if descuento_promocion < 0 or descuento_promocion > subtotal - descuento:
@@ -127,7 +136,7 @@ def crear_venta(
                 articulo_id=articulo.id,
                 cantidad=cantidad,
                 precio_unitario=articulo.precio_venta,
-                subtotal=articulo.precio_venta * cantidad,
+                subtotal=int(round(articulo.precio_venta * cantidad)),
             )
         )
     db.session.flush()
