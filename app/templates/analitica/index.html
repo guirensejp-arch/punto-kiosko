@@ -67,7 +67,7 @@
   <div class="col-6 col-md-4 col-lg-2">
     <div class="card card-stat card-stat-chico h-100">
       <i class="bi bi-receipt card-stat-icono"></i>
-      <div class="card-stat-valor">{{ datos.resumen.ventas }}</div>
+      <div class="card-stat-valor">{{ datos.resumen.pedidos }}</div>
       <div class="card-stat-etiqueta">Pedidos</div>
     </div>
   </div>
@@ -122,9 +122,9 @@
         </tr>
         <tr>
           <td>Pedidos</td>
-          <td class="text-end">{{ datos.comparacion.ventas.actual }}</td>
-          <td class="text-end text-muted">{{ datos.comparacion.ventas.anterior }}</td>
-          <td class="text-end">{{ variacion(datos.comparacion.ventas.variacion) }}</td>
+          <td class="text-end">{{ datos.comparacion.pedidos.actual }}</td>
+          <td class="text-end text-muted">{{ datos.comparacion.pedidos.anterior }}</td>
+          <td class="text-end">{{ variacion(datos.comparacion.pedidos.variacion) }}</td>
         </tr>
         <tr>
           <td>Ticket promedio</td>

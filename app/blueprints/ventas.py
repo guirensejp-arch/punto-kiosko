@@ -5,7 +5,7 @@ se elige medio de pago y se cobra. El cliente es opcional.
 """
 
 import json
-from datetime import datetime
+from datetime import date, datetime, time, timedelta
 
 from flask import (
     Blueprint,
@@ -38,11 +38,24 @@ from app.utils.numeros import parsear_decimal
 
 ventas_bp = Blueprint('ventas', __name__, url_prefix='/ventas')
 
+PERIODOS_HISTORIAL = {'HOY': 'Hoy', 'SEMANA': 'Semana', 'MES': 'Mes', 'TODO': 'Todo'}
+_DIAS_PERIODO = {'HOY': 1, 'SEMANA': 7, 'MES': 30}
+
+
+def _rango_periodo(periodo):
+    """Inicio del rango para un período, o ``None`` (Todo)."""
+    if periodo in _DIAS_PERIODO:
+        return datetime.combine(
+            date.today() - timedelta(days=_DIAS_PERIODO[periodo] - 1), time.min
+        )
+    return None
+
 
 @ventas_bp.route('/')
 @login_required
 @role_required('ADMIN', 'CAJERO')
 def lista():
+    periodo = request.args.get('periodo') or 'HOY'
     estado = request.args.get('estado') or ''
     metodo_pago_id = request.args.get('metodo_pago', type=int)
     desde = request.args.get('desde') or ''
@@ -56,6 +69,8 @@ def lista():
             pass
     if metodo_pago_id:
         consulta = consulta.filter(Venta.metodo_pago_id == metodo_pago_id)
+
+    # El rango puntual (desde/hasta) tiene prioridad sobre el período.
     if desde:
         consulta = consulta.filter(
             Venta.fecha_hora >= datetime.strptime(desde, '%Y-%m-%d')
@@ -65,18 +80,26 @@ def lista():
             Venta.fecha_hora
             <= datetime.strptime(hasta, '%Y-%m-%d').replace(hour=23, minute=59)
         )
+    if not desde and not hasta:
+        inicio = _rango_periodo(periodo)
+        if inicio is not None:
+            consulta = consulta.filter(Venta.fecha_hora >= inicio)
 
     ventas = consulta.order_by(Venta.fecha_hora.desc()).all()
     metodos = MetodoPago.query.order_by(MetodoPago.nombre).all()
+    total_rango = sum(v.total for v in ventas if v.estado != EstadoVenta.ANULADA)
 
     return render_template(
         'ventas/lista.html',
         ventas=ventas,
         metodos=metodos,
+        periodo=periodo,
+        periodos=PERIODOS_HISTORIAL,
         estado=estado,
         metodo_pago_id=metodo_pago_id,
         desde=desde,
         hasta=hasta,
+        total_rango=total_rango,
         etiquetas=ETIQUETAS_ESTADO_VENTA,
         clases=CLASES_ESTADO_VENTA,
     )

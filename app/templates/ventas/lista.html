@@ -5,7 +5,10 @@
 <header class="page-header">
   <div>
     <h1 class="page-title">Ventas</h1>
-    <div class="page-meta">Mostrador · {{ ventas | length }} en el rango</div>
+    <div class="page-meta">
+      {{ ventas | length }} venta(s) · Total {{ total_rango | moneda }}
+      {% if desde or hasta %}· rango {{ desde }} → {{ hasta }}{% endif %}
+    </div>
   </div>
   <div class="page-accion">
     <a href="{{ url_for('ventas.nueva') }}" class="btn btn-primary">
@@ -14,10 +17,21 @@
   </div>
 </header>
 
+<div class="mb-3">
+  <div class="segmented" role="group" aria-label="Período">
+    {% for valor, etiqueta in periodos.items() %}
+    <a href="{{ url_for('ventas.lista', periodo=valor, estado=estado, metodo_pago=metodo_pago_id or '') }}"
+       class="segmented-item {{ 'active' if valor == periodo and not (desde or hasta) }}"
+       {% if valor == periodo and not (desde or hasta) %}aria-current="page"{% endif %}>{{ etiqueta }}</a>
+    {% endfor %}
+  </div>
+</div>
+
 <div class="card mb-3">
   <div class="card-header">Filtros</div>
   <div class="card-body">
     <form method="get" class="row g-2">
+      <input type="hidden" name="periodo" value="{{ periodo }}">
       <div class="col-6 col-md-3">
         <label class="form-label small text-muted mb-1">Estado</label>
         <select name="estado" class="form-select">

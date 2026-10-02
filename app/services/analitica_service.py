@@ -162,7 +162,7 @@ def _pedidos_agregados(ventana):
     unidades = _filtrar(unidades, Venta.fecha_hora, ventana)
     return {
         'ventas': int(ventas or 0),
-        'ventas': int(cantidad or 0),
+        'pedidos': int(cantidad or 0),
         'unidades': int(unidades.scalar() or 0),
     }
 
@@ -195,7 +195,7 @@ def _costo_estimado(ventana):
         articulo = articulos.get(articulo_id)
         if articulo is None:
             continue
-        total += int(cantidad) * costo_producto(articulo)
+        total += int(round(float(cantidad or 0) * costo_producto(articulo)))
     return total
 
 
@@ -207,10 +207,10 @@ def resumen(periodo='DIA', desde=None, hasta=None):
     flujo = _caja(ventana)
     return {
         'ventas': agregados['ventas'],
-        'ventas': agregados['ventas'],
+        'pedidos': agregados['pedidos'],
         'ticket_promedio': (
-            round(agregados['ventas'] / agregados['ventas'])
-            if agregados['ventas'] else 0
+            round(agregados['ventas'] / agregados['pedidos'])
+            if agregados['pedidos'] else 0
         ),
         'unidades': agregados['unidades'],
         'costo_estimado': costo,
@@ -234,9 +234,9 @@ def _serie(ventana):
     filas = consulta.group_by(dia).order_by(dia).all()
 
     por_dia = {}
-    for valor_dia, ventas, ventas in filas:
+    for valor_dia, monto, cantidad in filas:
         clave = str(valor_dia)
-        por_dia[clave] = {'ventas': int(ventas or 0), 'ventas': int(ventas or 0)}
+        por_dia[clave] = {'ventas': int(monto or 0), 'pedidos': int(cantidad or 0)}
 
     if ventana['inicio'] is not None:
         inicio = ventana['inicio'].date()
@@ -255,14 +255,15 @@ def _serie(ventana):
     actual = inicio
     while actual <= fin:
         clave = actual.isoformat()
-        valores = por_dia.get(clave, {'ventas': 0, 'ventas': 0})
-        ventas = valores['ventas']
+        valores = por_dia.get(clave, {'ventas': 0, 'pedidos': 0})
+        monto = valores['ventas']
+        cantidad = valores['pedidos']
         serie.append({
             'fecha': clave,
             'etiqueta': actual.strftime('%d/%m'),
-            'ventas': valores['ventas'],
-            'ventas': ventas,
-            'ticket': round(valores['ventas'] / ventas) if ventas else 0,
+            'ventas': monto,
+            'pedidos': cantidad,
+            'ticket': round(monto / cantidad) if cantidad else 0,
         })
         actual += timedelta(days=1)
     return serie
@@ -353,9 +354,10 @@ def _productos(ventana, orden='UNIDADES'):
     total_facturacion = sum(int(facturacion or 0) for _, _, facturacion in filas) or 1
     articulos = []
     for articulo, unidades, facturacion in filas:
-        unidades = int(unidades or 0)
+        unidades_num = float(unidades or 0)
+        unidades = int(unidades_num) if unidades_num == int(unidades_num) else round(unidades_num, 3)
         facturacion = int(facturacion or 0)
-        costo = unidades * costo_producto(articulo)
+        costo = int(round(unidades_num * costo_producto(articulo)))
         articulos.append({
             'articulo': articulo,
             'unidades': unidades,
@@ -612,11 +614,11 @@ def _comparacion(ventana):
 
     return {
         'ventas': _fila('Ventas', actual['ventas'], anterior['ventas']),
-        'ventas': _fila('Pedidos', actual['ventas'], anterior['ventas']),
+        'pedidos': _fila('Ventas', actual['pedidos'], anterior['pedidos']),
         'ticket': _fila(
             'Ticket promedio',
-            round(actual['ventas'] / actual['ventas']) if actual['ventas'] else 0,
-            round(anterior['ventas'] / anterior['ventas']) if anterior['ventas'] else 0,
+            round(actual['ventas'] / actual['pedidos']) if actual['pedidos'] else 0,
+            round(anterior['ventas'] / anterior['pedidos']) if anterior['pedidos'] else 0,
         ),
         'unidades': _fila('Unidades', actual['unidades'], anterior['unidades']),
     }
@@ -643,10 +645,10 @@ def datos(periodo='DIA', desde=None, hasta=None, orden='UNIDADES'):
 
     resumen = {
         'ventas': agregados['ventas'],
-        'ventas': agregados['ventas'],
+        'pedidos': agregados['pedidos'],
         'ticket_promedio': (
-            round(agregados['ventas'] / agregados['ventas'])
-            if agregados['ventas'] else 0
+            round(agregados['ventas'] / agregados['pedidos'])
+            if agregados['pedidos'] else 0
         ),
         'unidades': agregados['unidades'],
         'costo_estimado': costo,
@@ -683,7 +685,7 @@ def graficos(datos):
         'serie': {
             'labels': [fila['etiqueta'] for fila in serie],
             'ventas': [fila['ventas'] for fila in serie],
-            'ventas': [fila['ventas'] for fila in serie],
+            'pedidos': [fila['pedidos'] for fila in serie],
             'ticket': [fila['ticket'] for fila in serie],
         },
         'metodos': {

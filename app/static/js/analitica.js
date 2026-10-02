@@ -117,8 +117,8 @@
     data: {
       labels: datos.serie.labels,
       datasets: [{
-        label: 'Pedidos',
-        data: datos.serie.ventas,
+        label: 'Ventas',
+        data: datos.serie.pedidos,
         backgroundColor: tinta,
         borderRadius: 3,
       }],
