@@ -30,7 +30,7 @@
 <div class="row g-3">
   <div class="col-12 col-md-5">
     <div class="card mb-3">
-      <div class="card-header">Datos del articulo</div>
+      <div class="card-header">Datos del artículo</div>
       <div class="card-body">
         <form method="post" action="{{ url_for('articulos.guardar', articulo_id=articulo.id) }}" novalidate>
           {{ form.hidden_tag() }}
@@ -66,7 +66,7 @@
               </div>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary mt-3">Guardar articulo</button>
+          <button type="submit" class="btn btn-primary mt-3">Guardar artículo</button>
         </form>
       </div>
     </div>
@@ -95,7 +95,7 @@
 
   <div class="col-12 col-md-7">
     <div class="card">
-      <div class="card-header">Insumos de la receta</div>
+      <div class="card-header">Insumos (para elaborados)</div>
       <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
           <thead>
@@ -129,7 +129,7 @@
                 <div class="empty-state">
                   <i class="bi bi-basket empty-state-icono"></i>
                   <span class="empty-state-titulo">Sin insumos</span>
-                  <span class="empty-state-texto">Articulo simple (se revende tal cual). Agregá líneas para armar una receta.</span>
+                  <span class="empty-state-texto">Artículo simple (se revende tal cual). Agregá insumos si lo elaborás.</span>
                 </div>
               </td>
             </tr>

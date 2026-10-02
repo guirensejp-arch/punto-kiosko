@@ -85,7 +85,7 @@
           <td class="text-end">{{ fila.ingresos | moneda }}</td>
           <td class="text-end">{{ fila.egresos | moneda }}</td>
           <td class="text-end">{{ fila.total_caja | moneda }}</td>
-          <td class="text-end">{{ fila.ventas }}</td>
+          <td class="text-end">{{ fila.pedidos }}</td>
           <td class="text-end {{ 'text-danger' if fila.diferencia != 0 else '' }}">{{ fila.diferencia | moneda }}</td>
           <td class="text-end">
             <a href="{{ url_for('caja.cierre_z', turno_id=fila.turno.id) }}" class="btn btn-sm btn-outline-secondary">Ver Z</a>

@@ -6,7 +6,7 @@
   <div>
     <h1 class="page-title">Inventario</h1>
     <div class="page-meta">
-      Nivel de stock por lote ·
+      Stock de reventa e insumos ·
       {% if config.fefo_activo %}
         <span class="badge badge-estado-ok">FEFO ON</span>
       {% else %}
@@ -28,8 +28,8 @@
   <div class="card-body">
     <form method="get" class="row g-2">
       <div class="col-12 col-md-4">
-        <label class="form-label small text-muted mb-1">Buscar insumo</label>
-        <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Pan de papa, cheddar…">
+        <label class="form-label small text-muted mb-1">Buscar</label>
+        <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Coca, pan, cheddar…">
       </div>
       <div class="col-6 col-md-3">
         <label class="form-label small text-muted mb-1">Categoría</label>

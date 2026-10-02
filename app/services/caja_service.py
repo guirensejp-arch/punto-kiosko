@@ -84,7 +84,7 @@ def kpis_turno(turno):
     movs = turno.movimientos
     return {
         'ventas': _suma(movs, TipoMovimientoCaja.VENTA),
-        'ventas': cantidad_pedidos(turno),
+        'pedidos': cantidad_pedidos(turno),
         'ingresos': _suma(movs, TipoMovimientoCaja.INGRESO),
         'egresos': _suma(movs, TipoMovimientoCaja.EGRESO),
     }
@@ -108,7 +108,7 @@ def resumen_historial(turno):
         'ingresos': ingresos,
         'egresos': egresos,
         'total_caja': ventas + ingresos - egresos,
-        'ventas': cantidad_pedidos(turno),
+        'pedidos': cantidad_pedidos(turno),
         'diferencia': turno.arqueo.diferencia if turno.arqueo else 0,
     }
 
