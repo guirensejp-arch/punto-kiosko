@@ -18,7 +18,7 @@ from decimal import Decimal
 
 from app import create_app
 from app.extensions import db
-from app.models.articulo import Articulo, CodigoBarras
+from app.models.articulo import Articulo, ArticuloInsumo, CodigoBarras
 from app.models.caja import (
     CategoriaMovimientoCaja,
     EstadoTurno,
@@ -27,7 +27,8 @@ from app.models.caja import (
     TipoMovimientoCaja,
     TurnoCaja,
 )
-from app.models.inventario import MovimientoInventario, TipoMovimientoInventario
+from app.models.inventario import Lote, MovimientoInventario, TipoMovimientoInventario
+from app.models.proveedor import Insumo, Proveedor
 from app.models.sistema import Auditoria
 from app.models.usuario import RolUsuario, Usuario
 from app.models.venta import Venta
@@ -91,6 +92,39 @@ CATALOGO = [
     ('Gel alcohol 250ml', 'Kiosco', 110000, 70000, 'ud', 30, '7795678006065'),
 ]
 
+# Proveedores e insumos (para artículos elaborados). costo en centavos por unidad.
+PROVEEDORES = [
+    ('Fiambrería Don Pedro', 'Fiambres', 'Av. Siempre Viva 123', '381 555-1000'),
+    ('Panadería La Espiga', 'Panadería', 'Mitre 456', '381 555-2000'),
+    ('Distribuidora del Norte', 'Almacén', 'Ruta 9 km 12', '381 555-3000'),
+]
+
+# (insumo, proveedor, unidad, costo, stock_inicial)
+INSUMOS = [
+    ('Pan de miga', 'Panadería La Espiga', 'ud', 20000, 60),
+    ('Jamón cocido', 'Fiambrería Don Pedro', 'kg', 800000, 4),
+    ('Queso fresco', 'Fiambrería Don Pedro', 'kg', 800000, 4),
+    ('Salchicha (pancho)', 'Fiambrería Don Pedro', 'ud', 30000, 40),
+    ('Pan de pancho', 'Panadería La Espiga', 'ud', 15000, 40),
+    ('Café molido', 'Distribuidora del Norte', 'kg', 1200000, 2),
+    ('Leche', 'Distribuidora del Norte', 'l', 130000, 10),
+    ('Azúcar', 'Distribuidora del Norte', 'kg', 120000, 5),
+    ('Pan de hamburguesa', 'Panadería La Espiga', 'ud', 25000, 30),
+    ('Medallón de carne', 'Fiambrería Don Pedro', 'ud', 90000, 30),
+]
+
+# Artículos elaborados: (nombre, categoria, precio_venta, [(insumo, cantidad, unidad)])
+ELABORADOS = [
+    ('Sánguche de jamón y queso', 'Kiosco', 250000,
+     [('Pan de miga', '2', 'ud'), ('Jamón cocido', '0.050', 'kg'), ('Queso fresco', '0.050', 'kg')]),
+    ('Pancho', 'Kiosco', 180000,
+     [('Salchicha (pancho)', '1', 'ud'), ('Pan de pancho', '1', 'ud')]),
+    ('Café con leche', 'Kiosco', 150000,
+     [('Café molido', '0.010', 'kg'), ('Leche', '0.150', 'l'), ('Azúcar', '0.010', 'kg')]),
+    ('Hamburguesa de kiosco', 'Kiosco', 350000,
+     [('Pan de hamburguesa', '1', 'ud'), ('Medallón de carne', '1', 'ud'), ('Queso fresco', '0.030', 'kg')]),
+]
+
 
 def crear_usuarios():
     admin = Usuario.query.filter_by(email_personal='admin@kiosko.com').first()
@@ -143,6 +177,62 @@ def crear_catalogo():
     return articulos
 
 
+def crear_elaborados(admin):
+    """Crea proveedores, insumos con costo y lote, y artículos elaborados con receta."""
+    proveedores = {}
+    for nombre, rubro, ubicacion, telefono in PROVEEDORES:
+        p = Proveedor.query.filter_by(nombre=nombre).first()
+        if p is None:
+            p = Proveedor(nombre=nombre, rubro=rubro, ubicacion=ubicacion,
+                          telefono=telefono, activo=True)
+            db.session.add(p)
+        proveedores[nombre] = p
+    db.session.commit()
+
+    insumos = {}
+    for nombre, proveedor, unidad, costo, stock in INSUMOS:
+        insumo = Insumo.query.filter_by(nombre=nombre).first()
+        if insumo is None:
+            insumo = Insumo(proveedor_id=proveedores[proveedor].id, nombre=nombre,
+                            rubro=proveedores[proveedor].rubro, costo=costo,
+                            unidad=unidad, activo=True)
+            db.session.add(insumo)
+            db.session.flush()
+        cargar = Lote.query.filter_by(insumo_id=insumo.id).count() == 0
+        insumos[nombre] = (insumo, stock if cargar else 0, unidad)
+    db.session.commit()
+
+    # Lotes iniciales con vencimiento a ~30 días.
+    for nombre, (insumo, stock, unidad) in insumos.items():
+        if stock:
+            from datetime import timedelta as _td
+            db.session.add(Lote(
+                insumo_id=insumo.id, numero='SEED', cantidad=Decimal(str(stock)),
+                unidad=unidad, fecha_ingreso=datetime.utcnow(),
+                fecha_vencimiento=datetime.utcnow() + _td(days=30),
+            ))
+    db.session.commit()
+
+    elaborados = []
+    for nombre, categoria, precio, receta in ELABORADOS:
+        art = Articulo.query.filter_by(nombre=nombre).first()
+        if art is None:
+            art = Articulo(nombre=nombre, categoria=categoria, precio_venta=precio,
+                           precio_costo=0, stock_propio=False, stock=Decimal('0'),
+                           unidad='ud', activo=True)
+            db.session.add(art)
+            db.session.flush()
+            for insumo_nombre, cantidad, unidad in receta:
+                insumo = insumos[insumo_nombre][0]
+                db.session.add(ArticuloInsumo(
+                    articulo_id=art.id, insumo_id=insumo.id,
+                    cantidad=Decimal(cantidad), unidad=unidad,
+                ))
+        elaborados.append((art, 0))
+    db.session.commit()
+    return elaborados
+
+
 def cargar_stock_inicial(articulos, turno, admin, momento):
     """Repone el stock inicial como ingreso de mercadería (sin caja)."""
     for art, stock in articulos:
@@ -190,9 +280,9 @@ def generar_dia(dia, articulos, cajeros, metodos, admin):
     for segundo in slots:
         momento = inicio + timedelta(seconds=segundo)
         lineas = _elegir_articulos(articulos)
-        # Repone si hace falta stock.
+        # Repone stock de reventa si hace falta.
         for art, cant in lineas:
-            if art.stock < cant:
+            if art.stock_propio and art.stock < cant:
                 art.stock = art.stock + Decimal('12')
         metodo = random.choices(
             list(metodos.values()),
@@ -202,20 +292,26 @@ def generar_dia(dia, articulos, cajeros, metodos, admin):
         pago = total
         if metodo.es_efectivo:
             pago = total + random.choice([0, 0, 0, 10000, 50000, 100000])
-        venta = venta_service.crear_venta(
-            lineas, random.choice(cajeros).id, metodo_pago=metodo,
-            pago_recibido=pago, turno=turno,
-        )
+        try:
+            venta = venta_service.crear_venta(
+                lineas, random.choice(cajeros).id, metodo_pago=metodo,
+                pago_recibido=pago, turno=turno,
+            )
+        except ValueError:
+            # Un elaborado sin insumos suficientes: se salta la venta.
+            db.session.rollback()
+            continue
         venta.fecha_hora = momento
         for mov in MovimientoCaja.query.filter_by(turno_caja_id=turno.id).all():
             if mov.fecha_hora > momento:
                 mov.fecha_hora = momento
         db.session.commit()
 
-    # Reposición de mercadería a mitad de turno (ingreso de stock).
-    if random.random() < 0.6:
+    # Reposición de mercadería a mitad de turno (ingreso de stock de reventa).
+    reventa = [a for a, _ in articulos if a.stock_propio]
+    if random.random() < 0.6 and reventa:
         for _ in range(random.randint(1, 3)):
-            art, _ = random.choice(articulos)
+            art = random.choice(reventa)
             cant = Decimal(str(random.choice([6, 12, 24])))
             art.stock = art.stock + cant
             db.session.add(MovimientoInventario(
@@ -272,6 +368,11 @@ def main():
         print('Creando catálogo...')
         articulos = crear_catalogo()
 
+        print('Creando proveedores, insumos y elaborados...')
+        elaborados = crear_elaborados(admin)
+        # La reposición de stock solo aplica a reventa (los elaborados usan insumos).
+        pool_venta = articulos + elaborados
+
         hoy = date.today()
         inicio = hoy - timedelta(days=30)
         dias = [
@@ -291,7 +392,7 @@ def main():
         db.session.commit()
 
         for dia in dias:
-            generar_dia(dia, articulos, cajeros, metodos, admin)
+            generar_dia(dia, pool_venta, cajeros, metodos, admin)
             print(f'  {dia} ok')
 
         ventas = db.session.query(db.func.count()).select_from(Venta).scalar()
