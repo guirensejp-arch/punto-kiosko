@@ -10,7 +10,7 @@ negocio:
   orden: "nombre_logo"
   # Ruta relativa dentro de app/static/
   logo: "branding/logo_cliente.svg"
-  favicon: "branding/favicon.png"
+  favicon: "branding/logo_cliente.svg"
 
 leudar:
   nombre: "LeudAr Labs"

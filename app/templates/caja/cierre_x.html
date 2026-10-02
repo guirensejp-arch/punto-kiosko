@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Cierre X — Turno {{ turno.id }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Cierre X</h1>
+    <div class="page-meta">
+      Arqueo parcial · Turno abierto desde {{ turno.fecha_apertura.strftime('%H:%M') }} · {{ turno.usuario.nombre_completo }}
+    </div>
+  </div>
+  <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('caja.cierre_x_ticket') }}{% if contado is not none %}?efectivo_contado={{ contado }}{% endif %}" target="_blank" class="btn btn-outline-secondary">
+      <i class="bi bi-printer"></i> Imprimir X
+    </a>
+    <a href="{{ url_for('caja.turno') }}" class="btn btn-outline-secondary">Volver a caja</a>
+  </div>
+</header>
+
+<div class="alert alert-info py-2 small">
+  El cierre X es un arqueo <strong>parcial</strong>: no cierra el turno ni reinicia los totales.
+  La diferencia es informativa.
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header">Totales del turno (hasta ahora)</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0 align-middle">
+          <tbody>
+            <tr><td>Ventas ({{ resumen.ventas_cantidad }})</td><td class="text-end">{{ resumen.ventas | moneda }}</td></tr>
+            <tr><td>Ingresos extra</td><td class="text-end">+ {{ resumen.ingresos | moneda }}</td></tr>
+            <tr><td>Egresos</td><td class="text-end">− {{ resumen.egresos | moneda }}</td></tr>
+            <tr class="fw-bold"><td>Total caja</td><td class="text-end">{{ resumen.total_caja | moneda }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Ventas por medio de pago</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0 align-middle">
+          <thead><tr><th>Medio</th><th class="text-center">Ventas</th><th class="text-end">Monto</th></tr></thead>
+          <tbody>
+            {% for fila in ventas_metodo %}
+            <tr>
+              <td>{{ fila.metodo.nombre if fila.metodo else '—' }}</td>
+              <td class="text-center">{{ fila.cantidad }}</td>
+              <td class="text-end">{{ fila.monto | moneda }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-center text-muted py-3">Sin ventas todavía.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="card">
+      <div class="card-header">Arqueo parcial de efectivo</div>
+      <div class="card-body">
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="form-label small mb-1" for="efectivo_contado">Efectivo contado</label>
+          <input type="text" id="efectivo_contado" name="efectivo_contado" class="form-control text-end"
+                 inputmode="numeric" placeholder="$ 0,00"
+                 value="{{ (contado / 100) | round(2) if contado is not none else '' }}">
+          <button type="submit" class="btn btn-outline-secondary w-100 mt-2">Calcular diferencia</button>
+        </form>
+
+        <div class="mt-3 small">
+          <div class="d-flex justify-content-between"><span class="text-muted">Fondo inicial</span><span>{{ resumen.fondo | moneda }}</span></div>
+          <div class="d-flex justify-content-between"><span class="text-muted">Efectivo esperado</span><span>{{ esperado | moneda }}</span></div>
+          {% if resumen.efectivo_contado is not none %}
+          <div class="d-flex justify-content-between"><span class="text-muted">Efectivo contado</span><span>{{ resumen.efectivo_contado | moneda }}</span></div>
+          <hr class="my-2">
+          <div class="d-flex justify-content-between fw-bold">
+            <span>Diferencia</span>
+            <span class="{{ 'text-danger' if resumen.diferencia and resumen.diferencia != 0 else 'text-success' }}">
+              {{ resumen.diferencia | moneda }}
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

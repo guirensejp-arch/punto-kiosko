@@ -272,6 +272,58 @@ def arqueo_ticket(turno_id):
     )
 
 
+@caja_bp.route('/cierre-x', methods=['GET', 'POST'])
+@login_required
+@role_required('ADMIN', 'CAJERO')
+def cierre_x():
+    """Cierre X: arqueo parcial del turno abierto, sin cerrarlo.
+
+    La diferencia es informativa. No persiste el arqueo; solo deja auditoría
+    de que se consultó/imprimió (opcional).
+    """
+    turno_actual = caja_service.turno_abierto()
+    if turno_actual is None:
+        flash('No hay un turno de caja abierto.', 'warning')
+        return redirect(url_for('caja.turno'))
+
+    contado = None
+    if request.method == 'POST':
+        contado = parsear_centavos(request.form.get('efectivo_contado') or '')
+        registrar('CIERRE_X', 'turno_caja', turno_actual.id, {'contado': contado})
+
+    esperado = caja_service.efectivo_esperado(turno_actual)
+    return render_template(
+        'caja/cierre_x.html',
+        turno=turno_actual,
+        resumen=caja_service.resumen_x(turno_actual, contado),
+        esperado=esperado,
+        ventas_metodo=caja_service.ventas_por_metodo(turno_actual),
+        contado=contado,
+    )
+
+
+@caja_bp.route('/cierre-x/ticket')
+@login_required
+@role_required('ADMIN', 'CAJERO')
+def cierre_x_ticket():
+    """Cierre X imprimible (ticket térmico 80mm). Marca 'X PARCIAL'."""
+    turno_actual = caja_service.turno_abierto()
+    if turno_actual is None:
+        flash('No hay un turno de caja abierto.', 'warning')
+        return redirect(url_for('caja.turno'))
+
+    contado = parsear_centavos(request.args.get('efectivo_contado') or '') \
+        if request.args.get('efectivo_contado') else None
+    return render_template(
+        'tickets/cierre_x.html',
+        turno=turno_actual,
+        resumen=caja_service.resumen_x(turno_actual, contado),
+        ventas_metodo=caja_service.ventas_por_metodo(turno_actual),
+        contado=contado,
+        hora_emision=datetime.utcnow(),
+    )
+
+
 @caja_bp.route('/movimientos', methods=['GET', 'POST'])
 @login_required
 @role_required('ADMIN', 'CAJERO')

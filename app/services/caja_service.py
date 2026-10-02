@@ -144,6 +144,32 @@ def totales_cierre(turno):
     }
 
 
+def resumen_x(turno, efectivo_contado=None):
+    """Arqueo parcial (cierre X): totales del turno SIN cerrarlo.
+
+    No persiste nada: es un cálculo de solo lectura. La diferencia es
+    informativa (no dispara la regla dura del cierre Z).
+    """
+    movs = turno.movimientos
+    ventas = _suma(movs, TipoMovimientoCaja.VENTA)
+    ingresos = _suma(movs, TipoMovimientoCaja.INGRESO)
+    egresos = _suma(movs, TipoMovimientoCaja.EGRESO)
+    esperado = efectivo_esperado(turno)
+    diferencia = (efectivo_contado - esperado) if efectivo_contado is not None else None
+    return {
+        'ventas': ventas,
+        'ventas_cantidad': cantidad_pedidos(turno),
+        'ingresos': ingresos,
+        'egresos': egresos,
+        'total_caja': ventas + ingresos - egresos,
+        'iva_informativo': round(ventas * 21 / 121),
+        'fondo': turno.fondo_inicial,
+        'efectivo_esperado': esperado,
+        'efectivo_contado': efectivo_contado,
+        'diferencia': diferencia,
+    }
+
+
 def registrar_movimiento(
     turno, tipo, monto, usuario_id, categoria=None,
     metodo_pago_id=None, proveedor_id=None, motivo=None,

@@ -1,0 +1,39 @@
+{% extends 'tickets/base_ticket.html' %}
+{% from 'tickets/_macros.html' import sep, fila %}
+
+{% block title %}Cierre X — Turno {{ turno.id }}{% endblock %}
+
+{% block ticket %}
+  {% with titulo='*** CIERRE X (PARCIAL) ***', subtitulo='Turno #' ~ turno.id ~ ' (NO CIERRA)', fecha=turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') %}
+    {% include 'tickets/_cabecera.html' %}
+  {% endwith %}
+
+  {{ fila('Ventas (' ~ resumen.ventas_cantidad ~ ')', resumen.ventas | moneda, fuerte=True) }}
+  {{ fila('Ingresos extra', '+ ' ~ (resumen.ingresos | moneda)) }}
+  {{ fila('Egresos', '− ' ~ (resumen.egresos | moneda)) }}
+  {{ fila('TOTAL CAJA', resumen.total_caja | moneda, fuerte=True) }}
+
+  {{ sep() }}
+  <div class="ticket-subtitulo">Ventas por medio de pago</div>
+  {% for item in ventas_metodo %}
+  {{ fila(item.metodo.nombre if item.metodo else '—', item.monto | moneda) }}
+  {% else %}
+  <div class="ticket-linea">Sin ventas.</div>
+  {% endfor %}
+
+  {{ sep() }}
+  {{ fila('Fondo inicial', resumen.fondo | moneda) }}
+  {{ fila('Efectivo esperado', resumen.efectivo_esperado | moneda) }}
+  {% if contado is not none %}
+  {{ fila('Efectivo contado', resumen.efectivo_contado | moneda) }}
+  {{ fila('Diferencia', resumen.diferencia | moneda, fuerte=True) }}
+  {% endif %}
+
+  {{ sep() }}
+  {{ fila('Cajero', turno.usuario.nombre_completo) }}
+  {{ fila('Emitido', hora_emision.strftime('%d/%m/%Y %H:%M') if hora_emision else '') }}
+
+  {% with nota_pie='Parcial — NO reemplaza al cierre Z' %}
+    {% include 'tickets/_pie.html' %}
+  {% endwith %}
+{% endblock %}
