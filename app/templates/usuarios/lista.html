@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1 class="page-title">Usuarios</h1>
+  <div class="page-accion">
+    <a href="{{ url_for('usuarios.nuevo') }}" class="btn btn-primary">+ Nuevo usuario</a>
+  </div>
+</header>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th class="text-center">Entregas</th>
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for usuario in usuarios %}
+        <tr class="{{ '' if usuario.activo else 'text-muted' }}">
+          <td>{{ usuario.nombre_completo }}</td>
+          <td>{{ usuario.email_personal }}</td>
+          <td>
+            {% if usuario.rol.value == 'ADMIN' %}Admin/Dueño
+            {% elif usuario.rol.value == 'CAJERO' %}Cajero
+            {% else %}Cadete{% endif %}
+          </td>
+          <td class="text-center">{{ usuario.entregas | length if usuario.rol.value == 'CADETE' else '—' }}</td>
+          <td>
+            {% if usuario.activo %}
+              <span class="badge badge-estado-ok">Activo</span>
+            {% else %}
+              <span class="badge text-bg-secondary">Inactivo</span>
+            {% endif %}
+            {% if usuario.debe_cambiar_clave %}
+              <span class="badge badge-estado-por-vencer">Debe cambiar clave</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+              <a href="{{ url_for('usuarios.editar', usuario_id=usuario.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+
+              <form method="post" action="{{ url_for('usuarios.reset_password', usuario_id=usuario.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Reset clave</button>
+              </form>
+
+              {% if usuario.activo %}
+              <form method="post" action="{{ url_for('usuarios.desactivar', usuario_id=usuario.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Desactivar</button>
+              </form>
+              {% else %}
+              <form method="post" action="{{ url_for('usuarios.activar', usuario_id=usuario.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <i class="bi bi-person-badge empty-state-icono"></i>
+              <span class="empty-state-titulo">No hay usuarios cargados</span>
+              <span class="empty-state-texto">Creá el primero con «+ Nuevo usuario».</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

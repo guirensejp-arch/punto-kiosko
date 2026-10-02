@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar proveedor' if proveedor else 'Nuevo proveedor' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <h1 class="h4 mb-3">{{ 'Editar proveedor' if proveedor else 'Nuevo proveedor' }}</h1>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              {{ form.nombre.label(class="form-label") }}
+              {{ form.nombre(class="form-control") }}
+              {% for error in form.nombre.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.rubro.label(class="form-label") }}
+              {{ form.rubro(class="form-control", list="rubros-sugeridos") }}
+              <datalist id="rubros-sugeridos">
+                <option value="Carnes"><option value="Lácteos"><option value="Panificados">
+                <option value="Verduras"><option value="Bebidas"><option value="Insumos secos">
+              </datalist>
+              {% for error in form.rubro.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              {{ form.descripcion.label(class="form-label") }}
+              {{ form.descripcion(class="form-control", rows="2", placeholder="Qué provee, condiciones generales…") }}
+              {% for error in form.descripcion.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.ubicacion.label(class="form-label") }}
+              {{ form.ubicacion(class="form-control", placeholder="Dirección / zona") }}
+              {% for error in form.ubicacion.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.telefono.label(class="form-label") }}
+              {{ form.telefono(class="form-control", placeholder="11 5555 6666") }}
+              {% for error in form.telefono.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6 d-flex align-items-end">
+              <div class="form-check form-switch mb-2">
+                {{ form.activo(class="form-check-input") }}
+                {{ form.activo.label(class="form-check-label") }}
+              </div>
+            </div>
+            <div class="col-12">
+              {{ form.notas.label(class="form-label") }}
+              {{ form.notas(class="form-control", rows="3", placeholder="Días de entrega, condiciones…") }}
+              {% for error in form.notas.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{{ url_for('proveedores.detalle', proveedor_id=proveedor.id) if proveedor else url_for('proveedores.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Recetas / Productos{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1 class="page-title">Recetas / Productos</h1>
+  {% if current_user.rol.value == 'ADMIN' %}
+  <div class="page-accion">
+    <a href="{{ url_for('articulos.nuevo') }}" class="btn btn-primary">+ Nueva receta</a>
+  </div>
+  {% endif %}
+</header>
+
+<div class="card mb-3">
+  <div class="card-header">Filtros</div>
+  <div class="card-body">
+    <form method="get" class="row g-2">
+      <div class="col-12 col-md-5">
+        <label class="form-label small text-muted mb-1">Buscar</label>
+        <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Burguer, papas…">
+      </div>
+      <div class="col-6 col-md-4">
+        <label class="form-label small text-muted mb-1">Categoría</label>
+        <select name="categoria" class="form-select">
+          <option value="">Todas</option>
+          {% for c in categorias %}
+          <option value="{{ c }}" {{ 'selected' if c == categoria else '' }}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-outline-secondary w-100">Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Productos</span>
+    <a href="{{ url_for('articulos.exportar_xlsx') }}" class="btn btn-sm btn-outline-secondary">Exportar Excel</a>
+  </div>
+  <div class="table-responsive d-none d-md-block">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Articulo</th>
+          <th class="text-end">Precio venta</th>
+          <th class="text-end">Costo insumos</th>
+          <th class="text-end">Margen</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+        <tr class="{{ '' if fila.articulo.activo else 'text-muted' }}">
+          <td>
+            {{ fila.articulo.nombre }}
+            {% if fila.articulo.categoria %}<br><span class="text-muted small">{{ fila.articulo.categoria }}</span>{% endif %}
+            {% if fila.articulo.descripcion %}<br><span class="text-muted small fst-italic">{{ fila.articulo.descripcion }}</span>{% endif %}
+          </td>
+          <td class="text-end">{{ fila.articulo.precio_venta | moneda }}</td>
+          <td class="text-end">{{ fila.costo | moneda }}</td>
+          <td class="text-end {{ 'text-danger' if fila.margen is not none and fila.margen < 30 else 'text-success' }}">
+            {{ fila.margen ~ '%' if fila.margen is not none else '—' }}
+          </td>
+          <td class="text-center">
+            {% if fila.articulo.activo %}
+              <span class="badge badge-estado-ok">Activo</span>
+            {% else %}
+              <span class="badge text-bg-secondary">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{{ url_for('articulos.detalle', articulo_id=fila.articulo.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <i class="bi bi-journal-text empty-state-icono"></i>
+              <span class="empty-state-titulo">No hay articulos cargados</span>
+              <span class="empty-state-texto">Creá el primero con «+ Nueva receta».</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-md-none">
+    {% for fila in filas %}
+    <a href="{{ url_for('articulos.detalle', articulo_id=fila.articulo.id) }}"
+       class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom text-decoration-none text-body">
+      <span>
+        <strong>{{ fila.articulo.nombre }}</strong><br>
+        <span class="text-muted small">{{ fila.articulo.precio_venta | moneda }} · costo {{ fila.costo | moneda }}</span>
+      </span>
+      <span class="{{ 'text-danger' if fila.margen is not none and fila.margen < 30 else 'text-success' }} fw-semibold">
+        {{ fila.margen ~ '%' if fila.margen is not none else '—' }}
+      </span>
+    </a>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-journal-text empty-state-icono"></i>
+      <span class="empty-state-titulo">No hay articulos cargados</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<p class="form-text mt-2">Margen menor al 30% se resalta en rojo. El food cost se recalcula en vivo con cada cambio de costo de insumo.</p>
+{% endblock %}

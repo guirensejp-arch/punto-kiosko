@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Promociones{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1 class="page-title">Promociones</h1>
+  {% if current_user.rol.value == 'ADMIN' %}
+  <div class="page-accion">
+    <a href="{{ url_for('promociones.nueva') }}" class="btn btn-primary">+ Nueva promoción</a>
+  </div>
+  {% endif %}
+</header>
+
+<div class="card">
+  <div class="table-responsive d-none d-md-block">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Promoción</th><th>Descuento</th><th>Vigencia</th>
+          <th class="text-center">Estado</th><th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for promo in promociones %}
+        <tr class="{{ '' if promo.activo else 'text-muted' }}">
+          <td>
+            {{ promo.nombre }}
+            <br><span class="text-muted small">{{ 'Automática' if promo.aplicacion.value == 'AUTOMATICA' else 'Manual' }}</span>
+          </td>
+          <td>
+            {% if promo.tipo_descuento.value == 'PORCENTAJE' %}− {{ (promo.valor / 100) | round(2) }}%
+            {% elif promo.tipo_descuento.value == 'MONTO_FIJO' %}− {{ promo.valor | moneda }}
+            {% else %}2×1{% endif %}
+          </td>
+          <td>{{ promo.vigencia_desde.strftime('%d/%m/%Y') }} – {{ promo.vigencia_hasta.strftime('%d/%m/%Y') }}</td>
+          <td class="text-center"><span class="badge {{ clases[promo.estado] }}">{{ etiquetas[promo.estado] }}</span></td>
+          <td class="text-end">
+            {% if current_user.rol.value == 'ADMIN' %}
+            <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+              <a href="{{ url_for('promociones.editar', promocion_id=promo.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+              {% if promo.activo %}
+              <form method="post" action="{{ url_for('promociones.desactivar', promocion_id=promo.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Desactivar</button>
+              </form>
+              {% else %}
+              <form method="post" action="{{ url_for('promociones.activar', promocion_id=promo.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
+              </form>
+              {% endif %}
+              <form method="post" action="{{ url_for('promociones.eliminar', promocion_id=promo.id) }}"
+                    onsubmit="return confirm('¿Eliminar la promoción {{ promo.nombre }}? No se borra: se oculta y los ventas históricos quedan intactos.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+              </form>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              <i class="bi bi-tags empty-state-icono"></i>
+              <span class="empty-state-titulo">No hay promociones cargadas</span>
+              <span class="empty-state-texto">Creá la primera con «+ Nueva promoción».</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-md-none">
+    {% for promo in promociones %}
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+      <a href="{{ url_for('promociones.editar', promocion_id=promo.id) }}" class="text-decoration-none text-body">
+        <strong>{{ promo.nombre }}</strong><br>
+        <span class="text-muted small">
+          {% if promo.tipo_descuento.value == 'PORCENTAJE' %}− {{ (promo.valor / 100) | round(2) }}%
+          {% elif promo.tipo_descuento.value == 'MONTO_FIJO' %}− {{ promo.valor | moneda }}
+          {% else %}2×1{% endif %}
+          · hasta {{ promo.vigencia_hasta.strftime('%d/%m') }}
+        </span>
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge {{ clases[promo.estado] }}">{{ etiquetas[promo.estado] }}</span>
+        {% if current_user.rol.value == 'ADMIN' %}
+        <form method="post" action="{{ url_for('promociones.eliminar', promocion_id=promo.id) }}"
+              onsubmit="return confirm('¿Eliminar la promoción {{ promo.nombre }}? No se borra: se oculta y los ventas históricos quedan intactos.');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-tags empty-state-icono"></i>
+      <span class="empty-state-titulo">No hay promociones cargadas</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card-body border-top">
+    <p class="form-text mb-0">
+      Automática se aplica sola al cargar el venta; manual requiere que el cajero la elija.
+      El descuento de promoción y el descuento manual conviven y quedan en auditoría.
+    </p>
+  </div>
+</div>
+{% endblock %}

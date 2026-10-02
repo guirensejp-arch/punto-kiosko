@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Arqueo{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Arqueo</h1>
+    <div class="page-meta">
+      Turno desde {{ turno.fecha_apertura.strftime('%H:%M') }} · {{ turno.usuario.nombre_completo }}
+    </div>
+  </div>
+  <div class="page-accion">
+    <a href="{{ url_for('caja.turno') }}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</header>
+
+<form method="post" novalidate id="form-arqueo">
+  {{ form.hidden_tag() }}
+
+  <div class="card mb-3">
+    <div class="card-header">Efectivo</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label small text-muted">Efectivo esperado (sistema)</label>
+          <div class="h3" id="esperado" data-esperado="{{ esperado }}">{{ esperado | moneda }}</div>
+          {% if turno.fondo_inicial %}
+          <div class="form-text">Incluye fondo inicial {{ turno.fondo_inicial | moneda }}.</div>
+          {% endif %}
+        </div>
+        <div class="col-6">
+          {{ form.efectivo_contado.label(class="form-label") }}
+          {{ form.efectivo_contado(class="form-control", placeholder="$ 0,00", id="contado") }}
+          {% for error in form.efectivo_contado.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">Otros métodos (no se cuentan en efectivo)</div>
+    <div class="list-group list-group-flush">
+      {% for fila in otros %}
+      <div class="list-group-item d-flex justify-content-between">
+        <span>{{ fila.metodo.nombre }}</span><span>{{ fila.monto | moneda }}</span>
+      </div>
+      {% else %}
+      <div class="list-group-item text-muted small">Sin ventas por otros métodos.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">Resultado</div>
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span>Diferencia (contado − esperado)</span>
+        <span class="h4 mb-0" id="diferencia">—</span>
+      </div>
+      <div class="alert alert-warning py-2 small d-none" id="aviso-diferencia">
+        Hay una diferencia: es obligatorio el motivo y confirmarla para poder cerrar.
+      </div>
+      <div class="mb-2">
+        {{ form.motivo_diferencia.label(class="form-label small") }}
+        {{ form.motivo_diferencia(class="form-control", rows="2", placeholder="Ej: faltante en vuelto, error de carga…") }}
+      </div>
+      <div class="form-check">
+        {{ form.diferencia_confirmada(class="form-check-input") }}
+        {{ form.diferencia_confirmada.label(class="form-check-label small") }}
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary flex-grow-1">Guardar arqueo y cerrar turno</button>
+    <a href="{{ url_for('caja.turno') }}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function parsear(v) {
+    v = (v || '').trim().replace(/\s/g, '').replace('$', '');
+    if (!v) return null;
+    if (v.indexOf(',') >= 0) v = v.replace(/\./g, '').replace(',', '.');
+    var n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  }
+  function recalcular() {
+    var esperado = parseFloat(document.getElementById('esperado').dataset.esperado) / 100;
+    var contado = parsear(document.getElementById('contado').value);
+    var celda = document.getElementById('diferencia');
+    var aviso = document.getElementById('aviso-diferencia');
+    if (contado === null) { celda.textContent = '—'; celda.className = 'h4 mb-0'; aviso.classList.add('d-none'); return; }
+    var dif = contado - esperado;
+    if (Math.abs(dif) < 0.005) {
+      celda.textContent = '$ 0';
+      celda.className = 'h4 mb-0 text-success';
+      aviso.classList.add('d-none');
+    } else {
+      celda.textContent = (dif < 0 ? '− $ ' : '+ $ ') + Math.abs(dif).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+      celda.className = 'h4 mb-0 text-danger';
+      aviso.classList.remove('d-none');
+    }
+  }
+  document.getElementById('contado').addEventListener('input', recalcular);
+</script>
+{% endblock %}

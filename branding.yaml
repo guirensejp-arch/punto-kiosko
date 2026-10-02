@@ -1,0 +1,28 @@
+# =============================================================================
+# Branding de Punto Kiosko (LeudAr Labs) — editable sin tocar código.
+# =============================================================================
+# Los logos viven en app/static/branding/ (logo_cliente / logo_leudar).
+
+negocio:
+  nombre: "Punto Kiosko"
+  emoji: ""
+  # Orden de la marca en la barra superior: "nombre_logo" o "logo_nombre"
+  orden: "nombre_logo"
+  # Ruta relativa dentro de app/static/
+  logo: "branding/logo_cliente.svg"
+  favicon: "branding/favicon.png"
+
+leudar:
+  nombre: "LeudAr Labs"
+  producto: "Punto Kiosko"
+  logo: "branding/logo_leudar.svg"
+  marca_agua: true
+
+colores:
+  primario: "#16223A"
+  secundario: "#E4572E"
+  acento: "#B23A1B"
+  fondo: "#F4F5F7"
+
+footer:
+  texto: "Punto de venta para kioscos y despensas"

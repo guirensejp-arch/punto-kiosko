@@ -1,0 +1,26 @@
+{% extends 'tickets/base_ticket.html' %}
+{% from 'tickets/_macros.html' import sep, fila %}
+
+{% block title %}Ajuste de inventario{% endblock %}
+
+{% block ticket %}
+  {% set es_merma = conteo.diferencia > 0 %}
+  {% with titulo=('Merma' if es_merma else 'Ajuste de inventario'),
+          subtitulo=conteo.insumo.nombre,
+          fecha=conteo.fecha_hora.strftime('%d/%m/%Y %H:%M') %}
+    {% include 'tickets/_cabecera.html' %}
+  {% endwith %}
+
+  {{ fila('Insumo', conteo.insumo.nombre) }}
+  {{ fila('Stock sistema', conteo.cantidad_sistema ~ ' ' ~ conteo.insumo.unidad) }}
+  {{ fila('Contado', conteo.cantidad_contada ~ ' ' ~ conteo.insumo.unidad) }}
+  {{ fila('Diferencia', conteo.diferencia ~ ' ' ~ conteo.insumo.unidad, fuerte=True) }}
+  {{ sep() }}
+  {{ fila('Tipo', 'Merma (faltante)' if es_merma else 'Alta por sobrante') }}
+  {{ fila('Registrado por', conteo.usuario.nombre_completo) }}
+  {% if conteo.motivo %}{{ fila('Motivo', conteo.motivo) }}{% endif %}
+
+  {% with nota_pie='Comprobante de ajuste de inventario' %}
+    {% include 'tickets/_pie.html' %}
+  {% endwith %}
+{% endblock %}

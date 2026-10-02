@@ -1,0 +1,39 @@
+{% extends 'tickets/base_ticket.html' %}
+{% from 'tickets/_macros.html' import sep, fila %}
+
+{% block title %}Historial de caja{% endblock %}
+
+{% block ticket %}
+  {% set rango = etiqueta_periodo %}
+  {% if desde or hasta %}{% set rango = (desde or '—') ~ ' a ' ~ (hasta or '—') %}{% endif %}
+  {% with titulo='Historial de caja', subtitulo=rango, fecha=filas | length ~ ' turno(s)' %}
+    {% include 'tickets/_cabecera.html' %}
+  {% endwith %}
+
+  {% for fila_turno in filas %}
+  <div class="ticket-item">
+    <div class="ticket-fila">
+      <span>#{{ fila_turno.turno.id }} · {{ fila_turno.turno.fecha_apertura.strftime('%d/%m %H:%M') }}</span>
+      <span class="der">{{ fila_turno.total_caja | moneda }}</span>
+    </div>
+    <div class="ticket-nota">
+      Ventas {{ fila_turno.ventas | moneda }} · {{ fila_turno.ventas }} ped.
+      {% if fila_turno.diferencia %} · Dif {{ fila_turno.diferencia | moneda }}{% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="ticket-linea">No hay turnos cerrados en el rango.</div>
+  {% endfor %}
+
+  {{ sep() }}
+  {{ fila('Turnos', filas | length) }}
+  {{ fila('Ventas', totales.ventas | moneda) }}
+  {{ fila('Ingresos', totales.ingresos | moneda) }}
+  {{ fila('Egresos', totales.egresos | moneda) }}
+  {{ fila('Total caja', totales.total_caja | moneda, fuerte=True) }}
+  {% if totales.diferencia %}{{ fila('Diferencias', totales.diferencia | moneda) }}{% endif %}
+
+  {% with nota_pie='Reporte acotado — la versión completa se exporta en Excel' %}
+    {% include 'tickets/_pie.html' %}
+  {% endwith %}
+{% endblock %}

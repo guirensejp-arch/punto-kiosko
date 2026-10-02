@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="132" height="28" viewBox="0 0 132 28" role="img" aria-label="LeudAr Labs">
+  <rect x="2" y="6" width="16" height="16" rx="5" fill="#263238"/>
+  <path d="M7 18l3.2-8 1.6 5 1.4-3 2.8 6z" fill="#f9a825"/>
+  <text x="26" y="19.5" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#263238">LeudAr Labs</text>
+</svg>

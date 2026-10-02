@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Inicio</h1>
+    <div class="page-meta">Hola, {{ current_user.nombre }} · {{ branding.negocio.nombre }} {{ branding.negocio.emoji }}</div>
+  </div>
+  <div class="page-accion">
+    <div class="segmented" role="group" aria-label="Período">
+      {% for valor, etiqueta in periodos.items() %}
+      <a href="{{ url_for('ventas.nueva', periodo=valor) }}"
+         class="segmented-item {{ 'active' if valor == periodo }}"
+         {% if valor == periodo %}aria-current="page"{% endif %}>{{ etiqueta }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</header>
+
+<div class="row g-2 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card card-stat h-100">
+      <i class="bi bi-cash-stack card-stat-icono"></i>
+      <div class="card-stat-valor">{{ resumen.ventas | moneda }}</div>
+      <div class="card-stat-etiqueta">Ventas</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card card-stat h-100">
+      <i class="bi bi-receipt card-stat-icono"></i>
+      <div class="card-stat-valor">{{ resumen.ticket_promedio | moneda }}</div>
+      <div class="card-stat-etiqueta">Ticket promedio</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card card-stat h-100">
+      <i class="bi bi-bag-check card-stat-icono"></i>
+      <div class="card-stat-valor">{{ resumen.ventas }}</div>
+      <div class="card-stat-etiqueta">Pedidos</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card card-stat h-100">
+      <i class="bi bi-graph-up-arrow card-stat-icono"></i>
+      <div class="card-stat-valor">{{ resumen.mayor_margen[0].nombre if resumen.mayor_margen else '—' }}</div>
+      <div class="card-stat-etiqueta">Mayor margen{% if resumen.mayor_margen %} ({{ resumen.mayor_margen[1] }}%){% endif %}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">Más vendidos</div>
+      <div class="list-group list-group-flush">
+        {% for fila in resumen.mas_vendidos %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <span><span class="text-muted me-1">{{ loop.index }}.</span>{{ fila.articulo.nombre }}</span>
+          <span class="tabular">{{ fila.cantidad }} ud.</span>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <span class="empty-state-icono"><i class="bi bi-bar-chart"></i></span>
+          <span class="empty-state-texto">Todavía no hay ventas en este período.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center gap-2">
+        <span>Menos vendidos</span>
+        <a href="{{ url_for('promociones.nueva') }}" class="btn btn-sm btn-outline-secondary">Armar promoción →</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for fila in resumen.menos_vendidos %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <span><span class="text-muted me-1">{{ loop.index }}.</span>{{ fila.articulo.nombre }}</span>
+          <span class="tabular">{{ fila.cantidad }} ud.</span>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <span class="empty-state-icono"><i class="bi bi-bar-chart"></i></span>
+          <span class="empty-state-texto">Todavía no hay ventas en este período.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center gap-2">
+    <span>Notificaciones</span>
+    {% if notificaciones %}
+    <form method="post" action="{{ url_for('main.descartar_todas') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-sm btn-outline-secondary">Descartar todas</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    {% for notificacion in notificaciones %}
+    <div class="notificacion {{ 'notificacion-alerta' if notificacion.tipo.value in ('STOCK_BAJO', 'POR_VENCER') else 'notificacion-aviso' }}">
+      <span class="notificacion-texto">
+        <strong>{{ notificacion.tipo.value.replace('_', ' ').capitalize() }}:</strong>
+        {{ notificacion.mensaje }}
+      </span>
+      <form method="post" action="{{ url_for('main.descartar_notificacion', notificacion_id=notificacion.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">Descartar</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <span class="empty-state-icono"><i class="bi bi-check2-circle"></i></span>
+      <span class="empty-state-titulo">Todo en orden</span>
+      <span class="empty-state-texto">Sin notificaciones pendientes.</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Cierre Z — Turno {{ turno.id }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Cierre Z</h1>
+    <div class="page-meta">
+      Turno {{ turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') }}
+      {% if turno.fecha_cierre %}– {{ turno.fecha_cierre.strftime('%H:%M') }}{% endif %}
+      · {{ turno.usuario.nombre_completo }}
+    </div>
+  </div>
+  <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('caja.cierre_z_ticket', turno_id=turno.id) }}?auto=1" target="_blank" class="btn btn-outline-secondary">Imprimir (térmica)</a>
+    <a href="{{ url_for('caja.cierre_z_xlsx', turno_id=turno.id) }}" class="btn btn-outline-secondary">Exportar Excel</a>
+    <a href="{{ url_for('caja.historial') }}" class="btn btn-outline-secondary">Historial</a>
+  </div>
+</header>
+
+<div class="ticket mx-auto">
+  <div class="text-center fw-bold">{{ branding.negocio.nombre }} {{ branding.negocio.emoji }}</div>
+  <div class="text-center">Cierre Z — Turno #{{ turno.id }}</div>
+  <div class="text-center">
+    {{ turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') }}
+    {% if turno.fecha_cierre %}– {{ turno.fecha_cierre.strftime('%H:%M') }}{% endif %}
+  </div>
+  <div class="border-top border-dark my-2"></div>
+  <div>VENTAS</div>
+  {% for fila in ventas_metodo %}
+  <div class="d-flex justify-content-between">
+    <span>{{ fila.metodo.nombre if fila.metodo else '—' }}</span>
+    <span>{{ fila.monto | moneda }}</span>
+  </div>
+  {% else %}
+  <div class="text-muted">Sin ventas</div>
+  {% endfor %}
+  <div class="border-top border-dark my-2"></div>
+  <div class="d-flex justify-content-between fw-bold"><span>Total ventas</span><span>{{ totales.ventas | moneda }}</span></div>
+  <div class="d-flex justify-content-between"><span>Descuentos ({{ totales.descuentos_cantidad }})</span><span>− {{ totales.descuentos_monto | moneda }}</span></div>
+  <div class="d-flex justify-content-between"><span>IVA (21%)</span><span>informativo</span></div>
+  <div class="d-flex justify-content-between"><span>Ingresos extra</span><span>+ {{ totales.ingresos | moneda }}</span></div>
+  <div class="d-flex justify-content-between"><span>Egresos</span><span>− {{ totales.egresos | moneda }}</span></div>
+  <div class="border-top border-dark my-2"></div>
+  <div class="d-flex justify-content-between fw-bold"><span>TOTAL CAJA</span><span>{{ totales.total_caja | moneda }}</span></div>
+  {% if arqueo %}
+  <div class="d-flex justify-content-between">
+    <span>Diferencia arqueo</span><span>{{ arqueo.diferencia | moneda }}</span>
+  </div>
+  {% endif %}
+  <div class="border-top border-dark my-2"></div>
+  <div class="text-center">Cajero: {{ turno.usuario.nombre }} {{ turno.usuario.apellido }}</div>
+  <div class="text-center">Pedidos: {{ ventas }}</div>
+  <div class="border-top border-dark my-2"></div>
+  <div class="text-center">Gracias</div>
+</div>
+
+<div class="text-muted small mt-3 text-center">
+  El IVA es una línea informativa (no cálculo impositivo en v1). La versión extensa se exporta como Excel/PDF.
+</div>
+{% endblock %}

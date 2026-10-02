@@ -1,0 +1,44 @@
+{% extends 'tickets/base_ticket.html' %}
+{% from 'tickets/_macros.html' import sep, fila %}
+
+{% block title %}Venta #{{ venta.numero }}{% endblock %}
+
+{% block ticket %}
+  {% with titulo='Venta #' ~ venta.numero,
+          subtitulo=etiquetas_pedido.get(venta.estado.value, venta.estado.value),
+          fecha=venta.fecha_hora.strftime('%d/%m/%Y %H:%M') %}
+    {% include 'tickets/_cabecera.html' %}
+  {% endwith %}
+
+  {% if venta.cliente %}
+  {{ fila('Cliente', venta.cliente.nombre_completo) }}
+  {{ fila('Teléfono', venta.cliente.telefono | telefono) }}
+  {% else %}
+  {{ fila('Cliente', 'Ocasional') }}
+  {% endif %}
+
+  {{ sep() }}
+  {% for detalle in venta.detalles %}
+  <div class="ticket-item">
+    <div>{{ detalle.cantidad }} × {{ detalle.articulo.nombre }}</div>
+    <div class="ticket-fila"><span></span><span class="der">{{ detalle.subtotal | moneda }}</span></div>
+  </div>
+  {% endfor %}
+  {{ sep() }}
+  {{ fila('Subtotal', venta.subtotal | moneda) }}
+  {% if venta.descuento %}{{ fila('Descuento', '− ' ~ (venta.descuento | moneda)) }}{% endif %}
+  {% if venta.descuento_promocion %}
+    {% set etiqueta_promo = 'Promoción' ~ (' (' ~ venta.promocion.nombre ~ ')' if venta.promocion else '') %}
+    {{ fila(etiqueta_promo, '− ' ~ (venta.descuento_promocion | moneda)) }}
+  {% endif %}
+  {{ fila('TOTAL', venta.total | moneda, fuerte=True) }}
+  {{ sep() }}
+  {{ fila('Pago', venta.metodo_pago.nombre if venta.metodo_pago else '—') }}
+  {% if venta.pago_recibido %}{{ fila('Recibido', venta.pago_recibido | moneda) }}{% endif %}
+  {% if venta.vuelto %}{{ fila('Vuelto', venta.vuelto | moneda) }}{% endif %}
+  {% if venta.notas %}<div class="ticket-nota">Notas: {{ venta.notas }}</div>{% endif %}
+
+  {% with nota_pie='¡Gracias por su compra!' %}
+    {% include 'tickets/_pie.html' %}
+  {% endwith %}
+{% endblock %}

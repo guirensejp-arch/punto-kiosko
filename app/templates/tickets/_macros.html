@@ -1,0 +1,7 @@
+{% macro sep() %}<div class="ticket-sep"></div>{% endmacro %}
+
+{% macro fila(etiqueta, valor, fuerte=False) %}
+<div class="ticket-fila{% if fuerte %} ticket-total{% endif %}">
+  <span>{{ etiqueta }}</span><span class="der">{{ valor }}</span>
+</div>
+{% endmacro %}

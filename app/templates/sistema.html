@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Sistema{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1 class="page-title">Sistema</h1>
+</header>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="card">
+      <div class="card-header">Configuración</div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <h2 class="h6 text-muted mt-2">Inventario</h2>
+          <div class="form-check form-switch mb-2">
+            {{ form.fefo_activo(class="form-check-input") }}
+            {{ form.fefo_activo.label(class="form-check-label") }}
+          </div>
+
+          <h2 class="h6 text-muted mt-3">Interfaz</h2>
+          <div class="mb-2">
+            {{ form.font_size.label(class="form-label") }}
+            {{ form.font_size(class="form-select") }}
+          </div>
+
+          <h2 class="h6 text-muted mt-3">Impresora</h2>
+          <div class="mb-3">
+            {{ form.impresora_termica.label(class="form-label") }}
+            {{ form.impresora_termica(class="form-control", placeholder="Nombre o dispositivo") }}
+            {% for error in form.impresora_termica.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Guardar configuración
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="card">
+      <div class="card-header">Branding del cliente</div>
+      <div class="card-body small">
+        <p class="mb-2">Se edita en <code>branding.yaml</code> (sin tocar código).</p>
+        <ul class="list-unstyled mb-0">
+          <li><span class="text-muted">Negocio:</span> {{ branding.negocio.nombre }} {{ branding.negocio.emoji }}</li>
+          <li><span class="text-muted">Orden de marca:</span> {{ branding.negocio.orden }}</li>
+          <li><span class="text-muted">Articulo:</span> {{ branding.leudar.articulo }}</li>
+          <li><span class="text-muted">Marca de agua:</span> {{ 'sí' if branding.leudar.marca_agua else 'no' }}</li>
+          <li><span class="text-muted">Color primario:</span> {{ branding.colores.primario }}</li>
+          <li><span class="text-muted">Color secundario:</span> {{ branding.colores.secundario }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">Métodos de pago</div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush mb-3">
+          {% for metodo in metodos %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span class="{{ '' if metodo.activo else 'text-muted' }}">
+              {{ metodo.nombre }}
+              {% if metodo.es_efectivo %}<span class="badge text-bg-secondary">Efectivo</span>{% endif %}
+              {% if not metodo.activo %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}
+            </span>
+            <form method="post" action="{{ url_for('sistema.toggle_metodo_pago', metodo_id=metodo.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-outline-secondary">
+                {{ 'Desactivar' if metodo.activo else 'Activar' }}
+              </button>
+            </form>
+          </li>
+          {% else %}
+          <li class="list-group-item px-0">
+            <div class="empty-state py-2">
+              <i class="bi bi-credit-card empty-state-icono"></i>
+              <span class="empty-state-texto">Sin métodos cargados.</span>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+
+        <form method="post" action="{{ url_for('sistema.nuevo_metodo_pago') }}" class="row g-2 align-items-end">
+          {{ metodo_form.hidden_tag() }}
+          <div class="col-12">
+            {{ metodo_form.nombre.label(class="form-label small mb-1") }}
+            {{ metodo_form.nombre(class="form-control form-control-sm", placeholder="MercadoPago") }}
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              {{ metodo_form.es_efectivo(class="form-check-input") }}
+              {{ metodo_form.es_efectivo.label(class="form-check-label small") }}
+            </div>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-plus-circle"></i> Agregar método
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">Base de datos</div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">Descarga manual de la base (backup).</p>
+        <a href="{{ url_for('sistema.backup') }}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-download"></i> Exportar base
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

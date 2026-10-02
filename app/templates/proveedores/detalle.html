@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}{{ proveedor.nombre }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">{{ proveedor.nombre }}</h1>
+    <div class="page-meta">
+      Rubro: {{ proveedor.rubro }}
+      {% if proveedor.ubicacion %} · Ubicación: {{ proveedor.ubicacion }}{% endif %}
+      {% if proveedor.telefono %} · Contacto: {{ proveedor.telefono | telefono }}{% endif %}
+      {% if proveedor.activo %}
+        · <span class="badge badge-estado-ok">Activo</span>
+      {% else %}
+        · <span class="badge text-bg-secondary">Inactivo</span>
+      {% endif %}
+    </div>
+    {% if proveedor.descripcion %}
+    <p class="page-meta mb-0 mt-1">{{ proveedor.descripcion }}</p>
+    {% endif %}
+  </div>
+  <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('proveedores.lista') }}" class="btn btn-outline-secondary">Atrás</a>
+    {% if current_user.rol.value == 'ADMIN' %}
+    <a href="{{ url_for('proveedores.editar', proveedor_id=proveedor.id) }}" class="btn btn-primary">Editar</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="card mb-3">
+  <div class="card-header">Datos del proveedor</div>
+  <div class="card-body small">
+    <div class="row g-2">
+      <div class="col-12 col-md-4"><span class="text-muted">Nombre:</span> {{ proveedor.nombre }}</div>
+      <div class="col-12 col-md-4"><span class="text-muted">Rubro:</span> {{ proveedor.rubro }}</div>
+      <div class="col-12 col-md-4"><span class="text-muted">Teléfono:</span> {{ proveedor.telefono | telefono or '—' }}</div>
+      <div class="col-12 col-md-4"><span class="text-muted">Ubicación:</span> {{ proveedor.ubicacion or '—' }}</div>
+      <div class="col-12"><span class="text-muted">Descripción:</span> {{ proveedor.descripcion or '—' }}</div>
+      <div class="col-12"><span class="text-muted">Notas:</span> {{ proveedor.notas or '—' }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Insumos</span>
+    <div class="d-flex align-items-center gap-2">
+      {% if not turno_abierto %}
+      <span class="text-warning small">
+        <i class="bi bi-exclamation-triangle"></i>
+        Abrí un turno de caja para agregar unidades
+      </span>
+      {% endif %}
+      {% if current_user.rol.value == 'ADMIN' %}
+      <a href="{{ url_for('insumos.nuevo', proveedor_id=proveedor.id) }}" class="btn btn-sm btn-outline-secondary">+ Cargar insumo</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Insumo</th>
+          <th>Rubro</th>
+          <th class="text-end">Stock</th>
+          <th class="text-end">Último costo</th>
+          <th>Unidad</th>
+          <th class="text-center">Vencimiento</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for insumo in proveedor.insumos %}
+        {% set info = info_insumos.get(insumo.id) %}
+        <tr class="{{ '' if insumo.activo else 'text-muted' }}">
+          <td>{{ insumo.nombre }}</td>
+          <td>{{ insumo.rubro or '—' }}</td>
+          <td class="text-end">{{ info.stock if info else 0 }} {{ insumo.unidad }}</td>
+          <td class="text-end">{{ insumo.costo | moneda }}</td>
+          <td>{{ insumo.unidad }}</td>
+          <td class="text-center">
+            {% if info and info.estado %}
+              <span class="badge {{ info.clase }}">{{ info.etiqueta }}</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if insumo.activo %}
+              <span class="badge badge-estado-ok">Activo</span>
+            {% else %}
+              <span class="badge text-bg-secondary">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            {% if current_user.rol.value == 'ADMIN' %}
+            <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+              {% if insumo.activo %}
+                {% if turno_abierto %}
+                <a href="{{ url_for('proveedores.compra_insumo', proveedor_id=proveedor.id, insumo_id=insumo.id) }}" class="btn btn-sm btn-primary">+ Agregar unidades</a>
+                {% else %}
+                <button type="button" class="btn btn-sm btn-primary" disabled title="Necesitás un turno de caja abierto">+ Agregar unidades</button>
+                {% endif %}
+              {% endif %}
+              <a href="{{ url_for('insumos.editar', insumo_id=insumo.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+              {% if insumo.activo %}
+              <form method="post" action="{{ url_for('insumos.desactivar', insumo_id=insumo.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Desactivar</button>
+              </form>
+              {% else %}
+              <form method="post" action="{{ url_for('insumos.activar', insumo_id=insumo.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
+              </form>
+              {% endif %}
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <i class="bi bi-basket empty-state-icono"></i>
+              <span class="empty-state-titulo">Este proveedor todavía no tiene insumos</span>
+              <span class="empty-state-texto">Cargá el primero con «+ Cargar insumo».</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

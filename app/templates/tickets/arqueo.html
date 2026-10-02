@@ -1,0 +1,33 @@
+{% extends 'tickets/base_ticket.html' %}
+{% from 'tickets/_macros.html' import sep, fila %}
+
+{% block title %}Arqueo — Turno {{ turno.id }}{% endblock %}
+
+{% block ticket %}
+  {% set rango = turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') %}
+  {% if turno.fecha_cierre %}{% set rango = rango ~ '– ' ~ turno.fecha_cierre.strftime('%H:%M') %}{% endif %}
+  {% with titulo='Arqueo — Turno #' ~ turno.id, fecha=rango %}
+    {% include 'tickets/_cabecera.html' %}
+  {% endwith %}
+
+  {{ fila('Efectivo esperado', esperado | moneda) }}
+  {{ fila('Efectivo contado', arqueo.efectivo_contado | moneda) }}
+  {{ fila('Diferencia', arqueo.diferencia | moneda, fuerte=True) }}
+  {% if arqueo.motivo_diferencia %}{{ fila('Motivo', arqueo.motivo_diferencia) }}{% endif %}
+
+  {{ sep() }}
+  <div class="ticket-subtitulo">Otros métodos</div>
+  {% for item in ventas_metodo if not (item.metodo and item.metodo.es_efectivo) %}
+  {{ fila(item.metodo.nombre if item.metodo else '—', item.monto | moneda) }}
+  {% else %}
+  <div class="ticket-linea">Sin ventas por otros métodos.</div>
+  {% endfor %}
+
+  {{ sep() }}
+  {{ fila('Cajero', turno.usuario.nombre_completo) }}
+  {{ fila('Cerrado', arqueo.fecha_hora.strftime('%d/%m/%Y %H:%M')) }}
+
+  {% with nota_pie='Comprobante de arqueo de caja' %}
+    {% include 'tickets/_pie.html' %}
+  {% endwith %}
+{% endblock %}

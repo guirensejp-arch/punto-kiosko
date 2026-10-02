@@ -1,0 +1,411 @@
+{% extends 'base.html' %}
+{% block title %}Analítica{% endblock %}
+
+{% macro variacion(valor) -%}
+  {%- if valor is none -%}
+    <span class="text-muted">—</span>
+  {%- elif valor > 0 -%}
+    <span class="text-success">+{{ valor }}%</span>
+  {%- elif valor < 0 -%}
+    <span class="text-danger">{{ valor }}%</span>
+  {%- else -%}
+    <span class="text-muted">0%</span>
+  {%- endif -%}
+{%- endmacro %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Analítica</h1>
+    <div class="page-meta">{{ branding.negocio.nombre }} {{ branding.negocio.emoji }} · {{ datos.ventana.etiqueta }}</div>
+  </div>
+  <div class="page-accion">
+    <a href="{{ url_for('analitica.exportar', periodo=periodo, desde=desde, hasta=hasta, orden=orden) }}"
+       class="btn btn-primary"><i class="bi bi-file-earmark-excel"></i> Exportar Excel</a>
+  </div>
+</header>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <div class="segmented" role="group" aria-label="Período">
+        {% for valor, etiqueta in periodos.items() %}
+        <a href="{{ url_for('analitica.index', periodo=valor, orden=orden) }}"
+           class="segmented-item {{ 'active' if (valor == periodo and not desde and not hasta) }}"
+           {% if valor == periodo and not desde and not hasta %}aria-current="page"{% endif %}>{{ etiqueta }}</a>
+        {% endfor %}
+      </div>
+      {% if desde or hasta %}
+      <a href="{{ url_for('analitica.index', periodo=periodo, orden=orden) }}" class="btn btn-sm btn-outline-danger">Limpiar rango</a>
+      {% endif %}
+    </div>
+    <form method="get" action="{{ url_for('analitica.index') }}" class="row g-2 align-items-end">
+      <input type="hidden" name="orden" value="{{ orden }}">
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-0" for="desde">Desde</label>
+        <input type="date" class="form-control form-control-sm" id="desde" name="desde" value="{{ desde }}">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-0" for="hasta">Hasta</label>
+        <input type="date" class="form-control form-control-sm" id="hasta" name="hasta" value="{{ hasta }}">
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Aplicar rango</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-2 mb-3">
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-stat card-stat-chico h-100">
+      <i class="bi bi-cash-coin card-stat-icono"></i>
+      <div class="card-stat-valor">{{ datos.resumen.ventas | moneda }}</div>
+      <div class="card-stat-etiqueta">Ventas</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-stat card-stat-chico h-100">
+      <i class="bi bi-receipt card-stat-icono"></i>
+      <div class="card-stat-valor">{{ datos.resumen.ventas }}</div>
+      <div class="card-stat-etiqueta">Pedidos</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-stat card-stat-chico h-100">
+      <i class="bi bi-graph-up card-stat-icono"></i>
+      <div class="card-stat-valor">{{ datos.resumen.ticket_promedio | moneda }}</div>
+      <div class="card-stat-etiqueta">Ticket promedio</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-stat card-stat-chico h-100">
+      <i class="bi bi-box-seam card-stat-icono"></i>
+      <div class="card-stat-valor">{{ datos.resumen.unidades }}</div>
+      <div class="card-stat-etiqueta">Unidades vendidas</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-stat card-stat-chico h-100">
+      <i class="bi bi-cash-stack card-stat-icono"></i>
+      <div class="card-stat-valor">{{ datos.resumen.costo_estimado | moneda }}</div>
+      <div class="card-stat-etiqueta">Costo estimado</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-stat card-stat-chico h-100">
+      <i class="bi bi-piggy-bank card-stat-icono"></i>
+      <div class="card-stat-valor">{{ datos.resumen.margen_estimado | moneda }}</div>
+      <div class="card-stat-etiqueta">Margen bruto estimado</div>
+    </div>
+  </div>
+</div>
+<p class="text-muted small mb-3">
+  Costo y margen son <strong>estimados</strong>: se calculan con el food cost actual de cada receta,
+  no con el costo histórico al momento de la venta.
+</p>
+
+{% if datos.comparacion %}
+<div class="card mb-3">
+  <div class="card-header">Comparación con el período anterior</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0 align-middle">
+      <thead>
+        <tr><th>Métrica</th><th class="text-end">Actual</th><th class="text-end">Anterior</th><th class="text-end">Variación</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ventas</td>
+          <td class="text-end">{{ datos.comparacion.ventas.actual | moneda }}</td>
+          <td class="text-end text-muted">{{ datos.comparacion.ventas.anterior | moneda }}</td>
+          <td class="text-end">{{ variacion(datos.comparacion.ventas.variacion) }}</td>
+        </tr>
+        <tr>
+          <td>Pedidos</td>
+          <td class="text-end">{{ datos.comparacion.ventas.actual }}</td>
+          <td class="text-end text-muted">{{ datos.comparacion.ventas.anterior }}</td>
+          <td class="text-end">{{ variacion(datos.comparacion.ventas.variacion) }}</td>
+        </tr>
+        <tr>
+          <td>Ticket promedio</td>
+          <td class="text-end">{{ datos.comparacion.ticket.actual | moneda }}</td>
+          <td class="text-end text-muted">{{ datos.comparacion.ticket.anterior | moneda }}</td>
+          <td class="text-end">{{ variacion(datos.comparacion.ticket.variacion) }}</td>
+        </tr>
+        <tr>
+          <td>Unidades</td>
+          <td class="text-end">{{ datos.comparacion.unidades.actual }}</td>
+          <td class="text-end text-muted">{{ datos.comparacion.unidades.anterior }}</td>
+          <td class="text-end">{{ variacion(datos.comparacion.unidades.variacion) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-8">
+    <div class="card h-100">
+      <div class="card-header">Ventas por día</div>
+      <div class="card-body"><canvas id="graficoVentas" height="140"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">Ventas por método de pago</div>
+      <div class="card-body"><canvas id="graficoMetodos" height="180"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">Cantidad de ventas por día</div>
+      <div class="card-body"><canvas id="graficoPedidos" height="160"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">Ticket promedio por día</div>
+      <div class="card-body"><canvas id="graficoTicket" height="160"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">Ventas por tipo de entrega</div>
+      <div class="card-body"><canvas id="graficoEntregas" height="160"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">Ventas por origen</div>
+      <div class="card-body"><canvas id="graficoOrigenes" height="160"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-8">
+    <div class="card h-100">
+      <div class="card-header">Top 10 articulos por unidades</div>
+      <div class="card-body"><canvas id="graficoTopUnidades" height="160"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header">Top 10 articulos por facturación</div>
+  <div class="card-body"><canvas id="graficoTopFacturacion" height="120"></canvas></div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span>Productos</span>
+    <div class="segmented">
+      {% for valor, etiqueta in ordenes.items() %}
+      <a href="{{ url_for('analitica.index', periodo=periodo, desde=desde, hasta=hasta, orden=valor) }}"
+         class="segmented-item {{ 'active' if valor == orden }}"
+         {% if valor == orden %}aria-current="page"{% endif %}>Por {{ etiqueta|lower }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Articulo</th><th class="text-end">Unidades</th><th class="text-end">Facturación</th>
+          <th class="text-end">Precio prom.</th><th class="text-end">Costo est.</th>
+          <th class="text-end">Margen est.</th><th class="text-end">Particip.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in datos.articulos %}
+        <tr>
+          <td>{{ fila.articulo.nombre }}</td>
+          <td class="text-end">{{ fila.unidades }}</td>
+          <td class="text-end">{{ fila.facturacion | moneda }}</td>
+          <td class="text-end">{{ fila.precio_promedio | moneda }}</td>
+          <td class="text-end">{{ fila.costo_estimado | moneda }}</td>
+          <td class="text-end">{{ fila.margen_estimado | moneda }}</td>
+          <td class="text-end">{{ fila.participacion }}%</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="bi bi-bar-chart empty-state-icono"></i>
+              <span class="empty-state-texto">Sin ventas en el período.</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-5">
+    <div class="card h-100">
+      <div class="card-header">Clientes</div>
+      <div class="card-body">
+        <div class="row g-2 text-center mb-3">
+          <div class="col-4"><div class="h5 mb-0">{{ datos.clientes.compradores }}</div><div class="text-muted small">Compraron</div></div>
+          <div class="col-4"><div class="h5 mb-0">{{ datos.clientes.nuevos }}</div><div class="text-muted small">Nuevos</div></div>
+          <div class="col-4"><div class="h5 mb-0">{{ datos.clientes.recurrentes }}</div><div class="text-muted small">Recurrentes</div></div>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span class="text-muted">Pedidos del período</span><span>{{ datos.clientes.ventas }}</span>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span class="text-muted">Facturación</span><span>{{ datos.clientes.facturacion | moneda }}</span>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span class="text-muted">Ticket promedio</span><span>{{ datos.clientes.ticket_promedio | moneda }}</span>
+        </div>
+        {% if not datos.clientes.comparable_nuevos %}
+        <p class="text-muted small mt-2 mb-0">
+          En Histórico o con rango abierto no se distingue "cliente nuevo": todos los compradores figuran como nuevos.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-7">
+    <div class="card h-100">
+      <div class="card-header">Top clientes</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0 align-middle">
+          <thead><tr><th>Cliente</th><th class="text-end">Pedidos</th><th class="text-end">Facturación</th><th class="text-end">Ticket prom.</th></tr></thead>
+          <tbody>
+            {% for fila in datos.clientes.top %}
+            <tr>
+              <td>{{ fila.cliente.nombre_completo if fila.cliente else '—' }}</td>
+              <td class="text-end">{{ fila.ventas }}</td>
+              <td class="text-end">{{ fila.facturacion | moneda }}</td>
+              <td class="text-end">{{ fila.ticket | moneda }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4">
+                <div class="empty-state">
+                  <i class="bi bi-people empty-state-icono"></i>
+                  <span class="empty-state-texto">Sin datos.</span>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header">Caja y flujo del período</div>
+  <div class="card-body">
+    <div class="row g-2 text-center mb-3">
+      <div class="col-6 col-md-3"><div class="h6 mb-0">{{ datos.caja.ventas | moneda }}</div><div class="text-muted small">Ventas de caja</div></div>
+      <div class="col-6 col-md-3"><div class="h6 mb-0">{{ datos.caja.ingresos | moneda }}</div><div class="text-muted small">Ingresos</div></div>
+      <div class="col-6 col-md-3"><div class="h6 mb-0">{{ datos.caja.egresos | moneda }}</div><div class="text-muted small">Egresos</div></div>
+      <div class="col-6 col-md-3"><div class="h6 mb-0">{{ datos.caja.resultado | moneda }}</div><div class="text-muted small">Resultado de caja</div></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
+        <table class="table table-sm mb-0 align-middle">
+          <tbody>
+            <tr><td>Compras a proveedores</td><td class="text-end">{{ datos.caja.compras | moneda }}</td></tr>
+            <tr><td>Gastos</td><td class="text-end">{{ datos.caja.gastos | moneda }}</td></tr>
+            <tr><td>Retiros del dueño</td><td class="text-end">{{ datos.caja.retiros | moneda }}</td></tr>
+            <tr><td>Diferencia de arqueo (turnos cerrados)</td><td class="text-end">{{ datos.caja.diferencia_arqueo | moneda }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="text-muted small mb-1">Egresos por categoría</div>
+        {% for fila in datos.caja.egresos_detalle %}
+        <div class="d-flex justify-content-between small border-bottom py-1">
+          <span>{{ fila.etiqueta }}</span><span>{{ fila.monto | moneda }}</span>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="bi bi-arrow-up-circle empty-state-icono"></i>
+          <span class="empty-state-texto">Sin egresos en el período.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <p class="text-muted small mt-3 mb-0">
+      "Ventas de caja" sale de los movimientos de caja; puede diferir de "Ventas" (ventas) cuando un venta se cobra
+      por fuera del sistema. El resultado de caja es flujo de dinero, <strong>no ganancia</strong>.
+    </p>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-5">
+    <div class="card h-100">
+      <div class="card-header">Inventario</div>
+      <div class="card-body">
+        <div class="row g-2 text-center mb-2">
+          <div class="col-6 col-md-3 col-lg-6"><div class="h6 mb-0">{{ datos.inventario.insumos }}</div><div class="text-muted small">Insumos</div></div>
+          <div class="col-6 col-md-3 col-lg-6"><div class="h6 mb-0">{{ datos.inventario.valor_stock | moneda }}</div><div class="text-muted small">Valor de stock (est.)</div></div>
+          <div class="col-6 col-md-3 col-lg-6"><div class="h6 mb-0 text-danger">{{ datos.inventario.stock_bajo | length }}</div><div class="text-muted small">Stock bajo</div></div>
+          <div class="col-6 col-md-3 col-lg-6"><div class="h6 mb-0 text-warning">{{ datos.inventario.por_vencer | length }}</div><div class="text-muted small">Por vencer</div></div>
+          <div class="col-6 col-md-3 col-lg-6"><div class="h6 mb-0 text-danger">{{ datos.inventario.vencidos | length }}</div><div class="text-muted small">Vencidos</div></div>
+          <div class="col-6 col-md-3 col-lg-6"><div class="h6 mb-0">{{ datos.inventario.mermas }} / {{ datos.inventario.ajustes }}</div><div class="text-muted small">Mermas / ajustes</div></div>
+        </div>
+        <div class="text-muted small">El valor de stock es estimado a costo actual del insumo, no por lote.</div>
+        {% if datos.inventario.stock_bajo %}
+        <hr>
+        <div class="text-muted small mb-1">Insumos con stock bajo</div>
+        {% for insumo in datos.inventario.stock_bajo %}
+        <div class="d-flex justify-content-between small border-bottom py-1">
+          <span>{{ insumo.nombre }}</span><span>{{ stock_insumo(insumo) }} {{ insumo.unidad }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-7">
+    <div class="card h-100">
+      <div class="card-header">Consumo, mermas y ajustes por insumo</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0 align-middle">
+          <thead><tr><th>Insumo</th><th class="text-end">Consumo</th><th class="text-end">Merma</th><th class="text-end">Ajuste</th></tr></thead>
+          <tbody>
+            {% for fila in datos.inventario.consumo %}
+            <tr>
+              <td>{{ fila.insumo.nombre }}</td>
+              <td class="text-end">{{ '%.3f'|format(fila.consumo) }} {{ fila.unidad }}</td>
+              <td class="text-end">{{ '%.3f'|format(fila.merma) }} {{ fila.unidad }}</td>
+              <td class="text-end">{{ '%.3f'|format(fila.ajuste) }} {{ fila.unidad }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4">
+                <div class="empty-state">
+                  <i class="bi bi-box-seam empty-state-icono"></i>
+                  <span class="empty-state-texto">Sin movimientos en el período.</span>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="analitica-datos" type="application/json">{{ graficos | tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/analitica.js') }}"></script>
+{% endblock %}

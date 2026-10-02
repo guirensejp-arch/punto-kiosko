@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}{{ cliente.nombre_completo }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">{{ cliente.nombre_completo }}</h1>
+    <div class="page-meta">
+      {{ cliente.telefono | telefono }}{% if cliente.direccion %} · {{ cliente.direccion }}{% endif %}
+      {% if not cliente.activo %} · <span class="badge text-bg-secondary">Inactivo</span>{% endif %}
+    </div>
+  </div>
+  <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('clientes.lista') }}" class="btn btn-outline-secondary">Volver</a>
+    {% if current_user.rol.value == 'ADMIN' %}
+    <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="btn btn-primary">Editar</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="row g-3">
+  <div class="col-12 col-md-4">
+    <div class="card mb-3">
+      <div class="card-header">Datos</div>
+      <div class="card-body small">
+        <div>Teléfono: {{ cliente.telefono | telefono }}</div>
+        <div>Dirección: {{ cliente.direccion or '—' }}</div>
+        <div>Notas: {{ cliente.notas or '—' }}</div>
+        <div class="text-muted mt-2">Alta: {{ cliente.creado_en.strftime('%d/%m/%Y') }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Cuenta corriente / fiado</div>
+      <div class="card-body small">
+        <div class="d-flex justify-content-between"><span>Saldo adeudado</span><strong>$ 0</strong></div>
+        <div class="form-text mb-0">Se habilita en el módulo de Fiado (fuera del alcance actual).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-8">
+    <div class="card">
+      <div class="card-header">Historial de ventas</div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0 small">
+            <thead>
+              <tr><th>#</th><th>Fecha</th><th class="text-end">Total</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+              {% for venta in cliente.ventas %}
+              <tr>
+                <td><a href="{{ url_for('ventas.detalle', venta_id=venta.id) }}">#{{ venta.numero }}</a></td>
+                <td>{{ venta.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td class="text-end">{{ venta.total | moneda }}</td>
+                <td><span class="badge {{ clases_pedido[venta.estado.value] }}">{{ etiquetas_pedido[venta.estado.value] }}</span></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-center text-muted py-4">Sin ventas todavía.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

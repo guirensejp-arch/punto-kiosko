@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Proveedores{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1 class="page-title">Proveedores</h1>
+  {% if current_user.rol.value == 'ADMIN' %}
+  <div class="page-accion">
+    <a href="{{ url_for('proveedores.nuevo') }}" class="btn btn-primary">+ Nuevo proveedor</a>
+  </div>
+  {% endif %}
+</header>
+
+<div class="card mb-3">
+  <div class="card-header">Filtros</div>
+  <div class="card-body">
+    <form method="get" class="row g-2">
+      <div class="col-12 col-md-5">
+        <label class="form-label small text-muted mb-1">Buscar</label>
+        <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Nombre, rubro…">
+      </div>
+      <div class="col-6 col-md-4">
+        <label class="form-label small text-muted mb-1">Rubro</label>
+        <select name="rubro" class="form-select">
+          <option value="">Todos</option>
+          {% for r in rubros %}
+          <option value="{{ r }}" {{ 'selected' if r == rubro else '' }}>{{ r }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-3 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-outline-secondary w-100">Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Proveedores</span>
+    <a href="{{ url_for('proveedores.exportar_xlsx') }}" class="btn btn-sm btn-outline-secondary">Exportar Excel</a>
+  </div>
+  <div class="table-responsive d-none d-md-block">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Proveedor</th>
+          <th>Rubro</th>
+          <th>Ubicación</th>
+          <th>Teléfono</th>
+          <th class="text-center">Insumos</th>
+          <th class="text-end">Última compra</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for proveedor in proveedores %}
+        {% set fecha = ultimas_compras.get(proveedor.id) %}
+        <tr class="{{ '' if proveedor.activo else 'text-muted' }}">
+          <td>{{ proveedor.nombre }}</td>
+          <td>{{ proveedor.rubro }}</td>
+          <td>{{ proveedor.ubicacion or '—' }}</td>
+          <td>{{ proveedor.telefono | telefono or '—' }}</td>
+          <td class="text-center">{{ proveedor.insumos | length }}</td>
+          <td class="text-end text-muted">{{ fecha.strftime('%d/%m/%Y') if fecha else '—' }}</td>
+          <td class="text-center">
+            {% if proveedor.activo %}
+              <span class="badge badge-estado-ok">Activo</span>
+            {% else %}
+              <span class="badge text-bg-secondary">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+              <a href="{{ url_for('proveedores.detalle', proveedor_id=proveedor.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
+              {% if current_user.rol.value == 'ADMIN' %}
+              <a href="{{ url_for('proveedores.editar', proveedor_id=proveedor.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <i class="bi bi-truck empty-state-icono"></i>
+              <span class="empty-state-titulo">No hay proveedores cargados</span>
+              <span class="empty-state-texto">Cargá el primero con «+ Nuevo proveedor».</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-md-none">
+    {% for proveedor in proveedores %}
+    {% set fecha = ultimas_compras.get(proveedor.id) %}
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+      <a href="{{ url_for('proveedores.detalle', proveedor_id=proveedor.id) }}" class="text-decoration-none text-body">
+        <strong>{{ proveedor.nombre }}</strong><br>
+        <span class="text-muted small">{{ proveedor.rubro }} · {{ proveedor.insumos | length }} insumos</span><br>
+        <span class="text-muted small">
+          {% if proveedor.ubicacion %}{{ proveedor.ubicacion }}{% endif %}
+          {% if proveedor.telefono %}{{ ' · ' if proveedor.ubicacion }}{{ proveedor.telefono | telefono }}{% endif %}
+          {% if not proveedor.ubicacion and not proveedor.telefono %}Sin ubicación ni teléfono{% endif %}
+        </span><br>
+        <span class="text-muted small">Última compra: {{ fecha.strftime('%d/%m/%Y') if fecha else '—' }}</span>
+      </a>
+      {% if proveedor.activo %}
+        <span class="badge badge-estado-ok">Activo</span>
+      {% else %}
+        <span class="badge text-bg-secondary">Inactivo</span>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-truck empty-state-icono"></i>
+      <span class="empty-state-titulo">No hay proveedores cargados</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

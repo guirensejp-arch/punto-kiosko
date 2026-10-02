@@ -1,0 +1,24 @@
+{% extends 'tickets/base_ticket.html' %}
+{% from 'tickets/_macros.html' import sep, fila %}
+
+{% block title %}Carga de insumo{% endblock %}
+
+{% block ticket %}
+  {% with titulo='Carga de insumo',
+          subtitulo='Lote ' ~ (lote.numero or '#' ~ lote.id),
+          fecha=lote.fecha_ingreso.strftime('%d/%m/%Y %H:%M') %}
+    {% include 'tickets/_cabecera.html' %}
+  {% endwith %}
+
+  {{ fila('Insumo', lote.insumo.nombre) }}
+  {{ fila('Rubro', lote.insumo.rubro or '—') }}
+  {{ fila('Cantidad', lote.cantidad ~ ' ' ~ lote.unidad) }}
+  {{ fila('Vence', lote.fecha_vencimiento.strftime('%d/%m/%Y')) }}
+  {{ sep() }}
+  {{ fila('Registrado por', movimiento.usuario.nombre_completo if movimiento else '—') }}
+  {% if movimiento and movimiento.motivo %}{{ fila('Motivo', movimiento.motivo) }}{% endif %}
+
+  {% with nota_pie='Comprobante de carga de mercadería' %}
+    {% include 'tickets/_pie.html' %}
+  {% endwith %}
+{% endblock %}

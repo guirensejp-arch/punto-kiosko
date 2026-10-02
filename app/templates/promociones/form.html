@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar promoción' if promocion else 'Nueva promoción' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <header class="page-header">
+      <h1 class="page-title">{{ 'Editar promoción' if promocion else 'Nueva promoción' }}</h1>
+      <div class="page-accion">
+        <a href="{{ url_for('promociones.lista') }}" class="btn btn-outline-secondary">Atrás</a>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-3">
+            <div class="col-12">
+              {{ form.nombre.label(class="form-label") }}
+              {{ form.nombre(class="form-control", placeholder="2×1 Burguer Smoked") }}
+              {% for error in form.nombre.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.tipo_descuento.label(class="form-label") }}
+              {{ form.tipo_descuento(class="form-select") }}
+            </div>
+            <div class="col-6 col-md-3">
+              {{ form.valor.label(class="form-label") }}
+              {{ form.valor(class="form-control", placeholder="50 o $ 1.500") }}
+              <div class="form-text">Vacío para 2×1.</div>
+              {% for error in form.valor.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-6 col-md-3">
+              {{ form.aplicacion.label(class="form-label") }}
+              {{ form.aplicacion(class="form-select") }}
+            </div>
+            <div class="col-6">
+              {{ form.vigencia_desde.label(class="form-label") }}
+              {{ form.vigencia_desde(class="form-control") }}
+              {% for error in form.vigencia_desde.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-6">
+              {{ form.vigencia_hasta.label(class="form-label") }}
+              {{ form.vigencia_hasta(class="form-control") }}
+              {% for error in form.vigencia_hasta.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              {{ form.articulos.label(class="form-label") }}
+              {{ form.articulos(class="form-select", size="8") }}
+              <div class="form-text">Mantené Ctrl (o Cmd) para seleccionar varios articulos.</div>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                {{ form.activo(class="form-check-input") }}
+                {{ form.activo.label(class="form-check-label") }}
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Guardar promoción</button>
+            <a href="{{ url_for('promociones.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

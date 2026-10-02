@@ -1,0 +1,38 @@
+{% extends 'tickets/base_ticket.html' %}
+{% from 'tickets/_macros.html' import sep, fila %}
+
+{% block title %}Compra a proveedor{% endblock %}
+
+{% block ticket %}
+  {% with titulo='Compra a proveedor',
+          subtitulo=movimiento.proveedor.nombre if movimiento.proveedor else 'Proveedor',
+          fecha=movimiento.fecha_hora.strftime('%d/%m/%Y %H:%M') %}
+    {% include 'tickets/_cabecera.html' %}
+  {% endwith %}
+
+  {% for linea in lineas %}
+  <div class="ticket-item">
+    <div>{{ linea.insumo.nombre }}</div>
+    <div class="ticket-fila">
+      <span>{{ linea.cantidad }} {{ linea.insumo.unidad }}{% if linea.lote and linea.lote.numero %} · Lote {{ linea.lote.numero }}{% endif %}</span>
+      <span class="der">{{ (linea.cantidad * linea.insumo.costo) | moneda }}</span>
+    </div>
+    <div class="ticket-fila ticket-nota">
+      <span>Vence {{ linea.lote.fecha_vencimiento.strftime('%d/%m/%Y') if linea.lote else '—' }}</span>
+      <span class="der">{{ linea.insumo.costo | moneda }} / {{ linea.insumo.unidad }}</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="ticket-linea">Sin líneas.</div>
+  {% endfor %}
+
+  {{ sep() }}
+  {{ fila('TOTAL', movimiento.monto | moneda, fuerte=True) }}
+  {{ sep() }}
+  {{ fila('Registrado por', movimiento.usuario.nombre_completo) }}
+  {% if movimiento.motivo %}{{ fila('Motivo', movimiento.motivo) }}{% endif %}
+
+  {% with nota_pie='Comprobante de compra' %}
+    {% include 'tickets/_pie.html' %}
+  {% endwith %}
+{% endblock %}

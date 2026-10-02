@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Compra a proveedor{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Compra a proveedor</h1>
+    <div class="page-meta">
+      Cada insumo genera un egreso en caja y un lote en inventario.
+      {% if not turno %}<span class="text-danger">Necesitás un turno abierto.</span>{% endif %}
+    </div>
+  </div>
+  <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('caja.movimientos') }}" class="btn btn-outline-secondary">Movimientos</a>
+    <a href="{{ url_for('caja.turno') }}" class="btn btn-outline-secondary">Volver a caja</a>
+  </div>
+</header>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post" novalidate id="form-compra">
+      {{ form.hidden_tag() }}
+
+      <div class="row g-2 mb-3">
+        <div class="col-12 col-md-5">
+          {{ form.proveedor_id.label(class="form-label small mb-1") }}
+          {{ form.proveedor_id(class="form-select") }}
+          {% for error in form.proveedor_id.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-7">
+          {{ form.motivo.label(class="form-label small mb-1") }}
+          {{ form.motivo(class="form-control", placeholder="Compra de insumos (opcional)") }}
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle" id="tabla-compra">
+          <thead>
+            <tr>
+              <th>Insumo</th>
+              <th style="width:110px;">Cantidad</th>
+              <th style="width:90px;">Unidad</th>
+              <th style="width:130px;">Costo unit.</th>
+              <th style="width:110px;">Nº lote</th>
+              <th style="width:160px;">Vence</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="filas-compra"></tbody>
+        </table>
+      </div>
+
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="agregar-fila">
+        <i class="bi bi-plus-circle"></i> Agregar insumo
+      </button>
+
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary" {{ 'disabled' if not turno else '' }}>
+          <i class="bi bi-bag-check"></i> Registrar compra
+        </button>
+        <a href="{{ url_for('caja.turno') }}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+      <div class="form-text mt-2">
+        El monto del egreso es la suma de cantidad × costo unitario. El costo cargado actualiza el último costo del insumo.
+      </div>
+    </form>
+  </div>
+</div>
+
+<template id="plantilla-fila">
+  <tr>
+    <td>
+      <select name="insumo_id" class="form-select form-select-sm select-insumo">
+        <option value="">—</option>
+        {% for insumo in insumos %}
+        <option value="{{ insumo.id }}" data-costo="{{ insumo.costo }}" data-unidad="{{ insumo.unidad }}">{{ insumo.nombre }}</option>
+        {% endfor %}
+      </select>
+    </td>
+    <td><input type="text" inputmode="decimal" name="cantidad" class="form-control form-control-sm" placeholder="1,0"></td>
+    <td>
+      <select name="unidad" class="form-select form-select-sm">
+        <option value="kg">kg</option><option value="g">g</option>
+        <option value="l">l</option><option value="ml">ml</option>
+        <option value="ud">ud</option>
+      </select>
+    </td>
+    <td><input type="text" inputmode="decimal" name="costo" class="form-control form-control-sm input-costo" placeholder="$ 0"></td>
+    <td><input type="text" name="numero" class="form-control form-control-sm" placeholder="#"></td>
+    <td><input type="date" name="vencimiento" class="form-control form-control-sm"></td>
+    <td><button type="button" class="btn btn-sm btn-outline-danger quitar-fila">×</button></td>
+  </tr>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var plantilla = document.getElementById('plantilla-fila');
+  var cuerpo = document.getElementById('filas-compra');
+
+  function agregarFila() {
+    var nodo = plantilla.content.cloneNode(true);
+    var fila = nodo.querySelector('tr');
+    fila.querySelector('.quitar-fila').addEventListener('click', function () { fila.remove(); });
+    fila.querySelector('.select-insumo').addEventListener('change', function (e) {
+      var opcion = e.target.selectedOptions[0];
+      if (!opcion) return;
+      fila.querySelector('select[name="unidad"]').value = opcion.dataset.unidad || 'kg';
+      var centavos = opcion.dataset.costo;
+      fila.querySelector('.input-costo').value = centavos ? (parseInt(centavos, 10) / 100).toString().replace('.', ',') : '';
+    });
+    cuerpo.appendChild(nodo);
+  }
+
+  document.getElementById('agregar-fila').addEventListener('click', agregarFila);
+  agregarFila();
+</script>
+{% endblock %}

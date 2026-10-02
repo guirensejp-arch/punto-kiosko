@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar cliente' if cliente else 'Nuevo cliente' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <h1 class="h4 mb-3">{{ 'Editar cliente' if cliente else 'Nuevo cliente' }}</h1>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              {{ form.nombre.label(class="form-label") }}
+              {{ form.nombre(class="form-control") }}
+              {% for error in form.nombre.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.apellido.label(class="form-label") }}
+              {{ form.apellido(class="form-control") }}
+              {% for error in form.apellido.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.telefono.label(class="form-label") }}
+              {{ form.telefono(class="form-control", placeholder="11 1234 5678") }}
+              <div class="form-text">Se guarda normalizado (evita duplicados).</div>
+              {% for error in form.telefono.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6 d-flex align-items-end">
+              <div class="form-check form-switch mb-2">
+                {{ form.activo(class="form-check-input") }}
+                {{ form.activo.label(class="form-check-label") }}
+              </div>
+            </div>
+            <div class="col-12">
+              {{ form.direccion.label(class="form-label") }}
+              {{ form.direccion(class="form-control") }}
+              {% for error in form.direccion.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              {{ form.notas.label(class="form-label") }}
+              {{ form.notas(class="form-control", rows="3") }}
+              {% for error in form.notas.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{{ url_for('clientes.detalle', cliente_id=cliente.id) if cliente else url_for('clientes.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

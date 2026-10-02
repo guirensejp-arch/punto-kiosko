@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Ticket{% endblock %} · {{ branding.leudar.articulo }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body class="ticket-body">
+
+<div class="ticket-acciones no-print">
+  <button type="button" class="ticket-btn" onclick="window.print()">Imprimir</button>
+  <button type="button" class="ticket-btn ticket-btn-suave" onclick="window.close()">Cerrar</button>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="ticket-acciones no-print">
+    <ul class="ticket-flash">
+      {% for category, message in messages %}
+      <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+{% endwith %}
+
+<main class="ticket-print">
+  {% block ticket %}{% endblock %}
+</main>
+
+<p class="ticket-hint-impresora no-print">
+  {% if configuracion.impresora_termica %}
+    Elegí «{{ configuracion.impresora_termica }}» en el diálogo de impresión.
+  {% else %}
+    Elegí tu impresora térmica de 80&nbsp;mm en el diálogo de impresión.
+  {% endif %}
+</p>
+
+<script>
+  window.addEventListener('load', function () {
+    if (new URLSearchParams(window.location.search).get('auto')) {
+      window.print();
+    }
+  });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

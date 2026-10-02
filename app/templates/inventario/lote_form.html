@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Carga inicial (sin caja){% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <h1 class="h4 mb-3">Carga inicial (sin caja)</h1>
+
+    <div class="alert alert-secondary small">
+      Esta carga <strong>no genera egreso de caja ni ticket de compra</strong>.
+      Usala para la carga inicial del negocio o un ajuste puntual. Para una compra
+      real, cargá las unidades desde <strong>Proveedores</strong>.
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-3">
+            <div class="col-12">
+              {{ form.insumo_id.label(class="form-label") }}
+              {{ form.insumo_id(class="form-select") }}
+              {% for error in form.insumo_id.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.numero.label(class="form-label") }}
+              {{ form.numero(class="form-control", placeholder="#41") }}
+              {% for error in form.numero.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-6 col-md-3">
+              {{ form.cantidad.label(class="form-label") }}
+              {{ form.cantidad(class="form-control", placeholder="3,2") }}
+              {% for error in form.cantidad.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-6 col-md-3">
+              {{ form.unidad.label(class="form-label") }}
+              {{ form.unidad(class="form-select") }}
+              {% for error in form.unidad.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.fecha_ingreso.label(class="form-label") }}
+              {{ form.fecha_ingreso(class="form-control") }}
+              <div class="form-text">Si se deja vacío, se usa hoy.</div>
+              {% for error in form.fecha_ingreso.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.fecha_vencimiento.label(class="form-label") }}
+              {{ form.fecha_vencimiento(class="form-control") }}
+              {% for error in form.fecha_vencimiento.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="form-text mt-3">
+            La cantidad se convierte a la unidad del insumo (kg↔g, l↔ml) antes de guardarse.
+            La fecha de vencimiento no puede ser anterior a hoy.
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Cargar lote</button>
+            <a href="{{ url_for('inventario.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Ingresos / Egresos{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Ingresos / Egresos</h1>
+    <div class="page-meta">
+      {% if turno %}Turno abierto · {{ turno.usuario.nombre_completo }}{% else %}Sin turno abierto{% endif %}
+    </div>
+  </div>
+  <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('caja.compras') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-bag-plus"></i> Compra a proveedor
+    </a>
+    <a href="{{ url_for('caja.turno') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Volver a caja
+    </a>
+  </div>
+</header>
+
+{% if turno %}
+<div class="card mb-3">
+  <div class="card-header">Nuevo movimiento</div>
+  <div class="card-body">
+    <form method="post" novalidate class="row g-2">
+      {{ form.hidden_tag() }}
+      <div class="col-6 col-md-3">
+        {{ form.tipo.label(class="form-label small mb-1") }}
+        {{ form.tipo(class="form-select") }}
+      </div>
+      <div class="col-6 col-md-3">
+        {{ form.monto.label(class="form-label small mb-1") }}
+        {{ form.monto(class="form-control", placeholder="$ 0,00") }}
+        {% for error in form.monto.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-6 col-md-3">
+        {{ form.categoria.label(class="form-label small mb-1") }}
+        {{ form.categoria(class="form-select") }}
+      </div>
+      <div class="col-6 col-md-3">
+        {{ form.proveedor_id.label(class="form-label small mb-1") }}
+        {{ form.proveedor_id(class="form-select") }}
+      </div>
+      <div class="col-12">
+        {{ form.motivo.label(class="form-label small mb-1") }}
+        {{ form.motivo(class="form-control", placeholder="Compra de insumos, gasto de limpieza…") }}
+        {% for error in form.motivo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-12 mt-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-plus-circle"></i> Guardar movimiento
+        </button>
+      </div>
+      <div class="col-12">
+        <div class="form-text">Tipo, monto y motivo son obligatorios. El monto siempre es positivo; el tipo define si suma o resta.</div>
+      </div>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-warning">
+  Necesitás abrir un turno de caja para registrar movimientos.
+  <a href="{{ url_for('caja.turno') }}" class="alert-link">Abrir turno</a>.
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header">Movimientos del turno</div>
+  <div class="list-group list-group-flush">
+    {% for mov in movimientos %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <span>
+        {% if mov.tipo.value == 'EGRESO' %}<i class="bi bi-arrow-up-circle text-danger"></i> <strong class="text-danger">− {{ mov.monto | moneda }}</strong>
+        {% elif mov.tipo.value == 'INGRESO' %}<i class="bi bi-arrow-down-circle text-success"></i> <strong class="text-success">+ {{ mov.monto | moneda }}</strong>
+        {% else %}<i class="bi bi-cash-coin"></i> <strong>{{ mov.monto | moneda }}</strong>{% endif %}
+        {{ mov.motivo or '—' }}
+      </span>
+      <span class="text-muted small d-flex align-items-center gap-2">
+        <span>
+          {{ mov.categoria.value if mov.categoria else '' }}
+          {% if mov.metodo_pago %}· {{ mov.metodo_pago.nombre }}{% endif %}
+          {% if mov.proveedor %}· {{ mov.proveedor.nombre }}{% endif %}
+          · {{ mov.fecha_hora.strftime('%H:%M') }} · {{ mov.usuario.nombre }}
+        </span>
+        {% if mov.categoria and mov.categoria.value == 'PROVEEDOR' %}
+        <a href="{{ url_for('caja.compra_ticket', movimiento_id=mov.id) }}?auto=1" target="_blank" class="btn btn-sm btn-outline-secondary">Imprimir</a>
+        {% endif %}
+      </span>
+    </div>
+    {% else %}
+    <div class="list-group-item">
+      <div class="empty-state">
+        <i class="bi bi-arrow-left-right empty-state-icono"></i>
+        <span class="empty-state-texto">Sin movimientos.</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

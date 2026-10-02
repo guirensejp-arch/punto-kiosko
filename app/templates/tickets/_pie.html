@@ -1,0 +1,6 @@
+{% from 'tickets/_macros.html' import sep %}
+{{ sep() }}
+<div class="ticket-pie">
+  {% if nota_pie %}<div>{{ nota_pie }}</div>{% endif %}
+  <div>Generado con {{ branding.leudar.articulo }} — {{ branding.leudar.nombre }}</div>
+</div>

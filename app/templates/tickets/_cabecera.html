@@ -1,0 +1,11 @@
+{% from 'tickets/_macros.html' import sep %}
+<div class="ticket-encabezado">
+  {% if branding.negocio.orden == 'logo_nombre' and branding.negocio.logo %}
+  <img class="ticket-logo" src="{{ url_for('static', filename=branding.negocio.logo) }}" alt="">
+  {% endif %}
+  <div class="ticket-titulo">{{ branding.negocio.nombre }} {{ branding.negocio.emoji }}</div>
+  {% if titulo %}<div class="ticket-subtitulo">{{ titulo }}</div>{% endif %}
+  {% if subtitulo %}<div class="ticket-linea">{{ subtitulo }}</div>{% endif %}
+  {% if fecha %}<div class="ticket-linea">{{ fecha }}</div>{% endif %}
+</div>
+{{ sep() }}

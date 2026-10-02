@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Inventario{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Inventario</h1>
+    <div class="page-meta">
+      Nivel de stock por lote ·
+      {% if config.fefo_activo %}
+        <span class="badge badge-estado-ok">FEFO ON</span>
+      {% else %}
+        <span class="badge text-bg-secondary">FEFO OFF</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('inventario.conteo') }}" class="btn btn-outline-secondary">Conteo físico</a>
+    <a href="{{ url_for('inventario.nuevo_lote') }}" class="btn btn-primary" title="Alta de stock sin egreso de caja (carga inicial o ajuste puntual)">Carga inicial (sin caja)</a>
+  </div>
+</header>
+
+<div class="card mb-3">
+  <div class="card-header">Filtros</div>
+  <div class="card-body">
+    <form method="get" class="row g-2">
+      <div class="col-12 col-md-4">
+        <label class="form-label small text-muted mb-1">Buscar insumo</label>
+        <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Pan de papa, cheddar…">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small text-muted mb-1">Categoría</label>
+        <select name="rubro" class="form-select">
+          <option value="">Todas</option>
+          {% for r in rubros %}
+          <option value="{{ r }}" {{ 'selected' if r == rubro else '' }}>{{ r }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small text-muted mb-1">Vencimiento</label>
+        <select name="vencimiento" class="form-select">
+          <option value="">Todos</option>
+          <option value="{{ estado_ok }}" {{ 'selected' if vencimiento == estado_ok else '' }}>OK</option>
+          <option value="{{ estado_por_vencer }}" {{ 'selected' if vencimiento == estado_por_vencer else '' }}>Por vencer</option>
+          <option value="{{ estado_vencida }}" {{ 'selected' if vencimiento == estado_vencida else '' }}>Vencidas</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-2 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-outline-secondary w-100">Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Insumos y sus lotes</span>
+    <a href="{{ url_for('inventario.exportar_xlsx') }}" class="btn btn-sm btn-outline-secondary">Exportar Excel</a>
+  </div>
+  <div class="table-responsive d-none d-md-block">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Insumo</th>
+          <th>Lote #</th>
+          <th>Ingresó</th>
+          <th>Vence</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Stock</th>
+          <th class="text-end">Unidad</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lote in lotes %}
+        {% set estado = estado_lote(lote) %}
+        <tr class="{{ 'text-muted' if estado == estado_vencida and lote.cantidad == 0 else '' }}">
+          <td>{{ lote.insumo.nombre }}</td>
+          <td>{{ ('#' ~ lote.numero) if lote.numero else '—' }}</td>
+          <td>{{ lote.fecha_ingreso.strftime('%d/%m/%Y') }}</td>
+          <td>{{ lote.fecha_vencimiento.strftime('%d/%m/%Y') }}</td>
+          <td class="text-center">
+            <span class="badge {{ clases_estado[estado] }}">{{ etiquetas_estado[estado] }}</span>
+          </td>
+          <td class="text-end">{{ lote.cantidad }}</td>
+          <td class="text-end">{{ lote.unidad }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('inventario.lote_ticket', lote_id=lote.id) }}?auto=1" target="_blank" class="btn btn-sm btn-outline-secondary">Imprimir</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <i class="bi bi-box-seam empty-state-icono"></i>
+              <span class="empty-state-titulo">No hay lotes cargados</span>
+              <span class="empty-state-texto">Cargá stock con una compra desde Proveedores o con «Carga inicial».</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-md-none">
+    {% for lote in lotes %}
+    {% set estado = estado_lote(lote) %}
+    <div class="px-3 py-2 border-bottom">
+      <div class="d-flex justify-content-between">
+        <strong>{{ lote.insumo.nombre }}</strong>
+        <span class="badge {{ clases_estado[estado] }}">{{ etiquetas_estado[estado] }}</span>
+      </div>
+      <div class="text-muted small">
+        {{ ('#' ~ lote.numero ~ ' · ') if lote.numero else '' }}stock {{ lote.cantidad }} {{ lote.unidad }} · vence {{ lote.fecha_vencimiento.strftime('%d/%m/%Y') }}
+      </div>
+      <div class="text-end mt-1">
+        <a href="{{ url_for('inventario.lote_ticket', lote_id=lote.id) }}?auto=1" target="_blank" class="btn btn-sm btn-outline-secondary">Imprimir</a>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-box-seam empty-state-icono"></i>
+      <span class="empty-state-titulo">No hay lotes cargados</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card-body border-top">
+    <p class="form-text mb-0">
+      El stock se descuenta por lote. Con <strong>FEFO ON</strong> la venta consume primero lo que vence antes.
+      Lote vencido = bloqueo de venta. El stock 0 de un lote vencido queda visible y auditado.
+    </p>
+  </div>
+</div>
+{% endblock %}

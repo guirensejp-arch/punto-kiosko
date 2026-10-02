@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Vender{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Vender</h1>
+    <div class="page-meta">
+      {% if turno %}Turno abierto desde {{ turno.fecha_apertura.strftime('%H:%M') }}{% else %}Se abrirá un turno al cobrar{% endif %}
+    </div>
+  </div>
+  <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('ventas.lista') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-clock-history"></i> Últimas ventas
+    </a>
+  </div>
+</header>
+
+<div class="pos" id="pos">
+  <section class="pos-catalogo">
+    <div class="pos-buscador">
+      <i class="bi bi-upc-scan"></i>
+      <input type="text" id="pos-scan" class="form-control"
+             placeholder="Escaneá un código o buscá por nombre / SKU…"
+             autocomplete="off" autofocus aria-label="Escanear o buscar artículo">
+    </div>
+    <div id="pos-resultados" class="pos-resultados"></div>
+  </section>
+
+  <aside class="pos-ticket card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Ticket</span>
+      <span class="badge text-bg-secondary" id="pos-cantidad">0</span>
+    </div>
+    <div class="pos-lineas" id="pos-lineas">
+      <div class="empty-state" id="pos-vacio">
+        <span class="empty-state-icono"><i class="bi bi-receipt"></i></span>
+        <span class="empty-state-texto">Escaneá o buscá para empezar.</span>
+      </div>
+    </div>
+    <div class="pos-totales">
+      <div class="d-flex justify-content-between"><span class="text-muted">Subtotal</span><span class="tabular" id="pos-subtotal">$ 0</span></div>
+      <div class="d-flex justify-content-between align-items-center gap-2 mt-1">
+        <span class="text-muted">Descuento</span>
+        <input type="text" id="pos-descuento" class="form-control form-control-sm text-end" inputmode="numeric" placeholder="0" value="">
+      </div>
+      <div class="d-flex justify-content-between fs-5 fw-bold mt-2"><span>Total</span><span class="tabular" id="pos-total">$ 0</span></div>
+    </div>
+    <div class="pos-cobro">
+      <div class="mb-2">
+        <label class="form-label small mb-1" for="pos-metodo">Medio de pago</label>
+        <select id="pos-metodo" class="form-select">
+          {% for metodo in metodos %}
+          <option value="{{ metodo.id }}" data-efectivo="{{ 'true' if metodo.es_efectivo else 'false' }}">{{ metodo.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-2 d-none" id="pos-efectivo-bloque">
+        <label class="form-label small mb-1" for="pos-recibido">Recibido</label>
+        <input type="text" id="pos-recibido" class="form-control text-end" inputmode="numeric" placeholder="0">
+        <div class="d-flex justify-content-between small mt-1">
+          <span class="text-muted">Vuelto</span>
+          <strong class="tabular" id="pos-vuelto">$ 0</strong>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary w-100 btn-lg" id="pos-cobrar" disabled>
+        <i class="bi bi-check2-circle"></i> Cobrar
+      </button>
+      <div class="pos-error text-danger small mt-2 d-none" id="pos-error"></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+  window.POS = {
+    buscarUrl: "{{ url_for('ventas.buscar') }}",
+    cobrarUrl: "{{ url_for('ventas.cobrar') }}",
+    csrf: "{{ csrf_token() }}"
+  };
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pos.js') }}"></script>
+{% endblock %}

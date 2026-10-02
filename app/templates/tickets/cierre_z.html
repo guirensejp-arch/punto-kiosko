@@ -1,0 +1,40 @@
+{% extends 'tickets/base_ticket.html' %}
+{% from 'tickets/_macros.html' import sep, fila %}
+
+{% block title %}Cierre Z — Turno {{ turno.id }}{% endblock %}
+
+{% block ticket %}
+  {% set rango = turno.fecha_apertura.strftime('%d/%m/%Y %H:%M') %}
+  {% if turno.fecha_cierre %}{% set rango = rango ~ '– ' ~ turno.fecha_cierre.strftime('%H:%M') %}{% endif %}
+  {% with titulo='Cierre Z — Turno #' ~ turno.id, fecha=rango %}
+    {% include 'tickets/_cabecera.html' %}
+  {% endwith %}
+
+  {{ fila('Cajero', turno.usuario.nombre_completo) }}
+
+  {{ sep() }}
+  <div class="ticket-subtitulo">VENTAS</div>
+  {% for item in ventas_metodo %}
+  {{ fila(item.metodo.nombre if item.metodo else '—', item.monto | moneda) }}
+  {% else %}
+  <div class="ticket-linea">Sin ventas</div>
+  {% endfor %}
+
+  {{ sep() }}
+  {{ fila('Total ventas', totales.ventas | moneda, fuerte=True) }}
+  {{ fila('Descuentos (' ~ totales.descuentos_cantidad ~ ')', '− ' ~ (totales.descuentos_monto | moneda)) }}
+  {{ fila('IVA (21%)', 'informativo') }}
+  {{ fila('Ingresos extra', '+ ' ~ (totales.ingresos | moneda)) }}
+  {{ fila('Egresos', '− ' ~ (totales.egresos | moneda)) }}
+  {{ sep() }}
+  {{ fila('TOTAL CAJA', totales.total_caja | moneda, fuerte=True) }}
+  {% if arqueo %}
+  {{ fila('Diferencia arqueo', arqueo.diferencia | moneda) }}
+  {% endif %}
+  {{ sep() }}
+  {{ fila('Pedidos', ventas) }}
+
+  {% with nota_pie='Gracias' %}
+    {% include 'tickets/_pie.html' %}
+  {% endwith %}
+{% endblock %}

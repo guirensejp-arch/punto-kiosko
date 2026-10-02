@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Caja{% endblock %}
+
+{% block content %}
+{% if turno is none %}
+  <header class="page-header">
+    <h1 class="page-title">Caja</h1>
+    <div class="page-accion">
+      <a href="{{ url_for('caja.historial') }}" class="btn btn-outline-secondary">Historial</a>
+    </div>
+  </header>
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-6 col-lg-5">
+      <div class="card">
+        <div class="card-header">Abrir turno</div>
+        <div class="card-body">
+          <p class="text-muted small">No hay un turno abierto. Ingresá el fondo inicial con el que arranca la caja.</p>
+          <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.fondo_inicial.label(class="form-label") }}
+              {{ form.fondo_inicial(class="form-control", placeholder="$ 0,00") }}
+              {% for error in form.fondo_inicial.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary">Abrir turno</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Caja</h1>
+      <div class="page-meta">
+        Turno <span class="badge badge-estado-ok">abierto</span>
+        desde {{ turno.fecha_apertura.strftime('%H:%M') }} · {{ turno.usuario.nombre_completo }}
+      </div>
+    </div>
+    <div class="page-accion d-flex flex-wrap gap-2">
+      <a href="{{ url_for('ventas.nueva') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nuevo venta
+      </a>
+      <a href="{{ url_for('caja.movimientos') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left-right"></i> Movimientos
+      </a>
+      <a href="{{ url_for('caja.compras') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-bag-plus"></i> Compra
+      </a>
+      <a href="{{ url_for('caja.historial') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-clock-history"></i> Historial
+      </a>
+      <a href="{{ url_for('caja.arqueo') }}" class="btn btn-outline-danger">
+        <i class="bi bi-lock"></i> Arqueo / Cerrar turno
+      </a>
+    </div>
+  </header>
+
+  <div class="row g-2 mb-3">
+    <div class="col-6 col-lg-3">
+      <div class="card card-stat h-100">
+        <i class="bi bi-cash-coin card-stat-icono"></i>
+        <div class="card-stat-valor">{{ kpis.ventas | moneda }}</div>
+        <div class="card-stat-etiqueta">Ventas del turno</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card card-stat h-100">
+        <i class="bi bi-receipt card-stat-icono"></i>
+        <div class="card-stat-valor">{{ kpis.ventas }}</div>
+        <div class="card-stat-etiqueta">Pedidos</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card card-stat h-100">
+        <i class="bi bi-arrow-down-circle card-stat-icono"></i>
+        <div class="card-stat-valor">{{ kpis.ingresos | moneda }}</div>
+        <div class="card-stat-etiqueta">Ingresos extra</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card card-stat h-100">
+        <i class="bi bi-arrow-up-circle card-stat-icono"></i>
+        <div class="card-stat-valor">{{ kpis.egresos | moneda }}</div>
+        <div class="card-stat-etiqueta">Egresos</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">Ventas del turno por método de pago</div>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr><th>Método</th><th class="text-center">Ventas</th><th class="text-end">Monto</th></tr>
+        </thead>
+        <tbody>
+          {% for fila in ventas_metodo %}
+          <tr>
+            <td>{{ fila.metodo.nombre if fila.metodo else '—' }}</td>
+            <td class="text-center">{{ fila.cantidad }}</td>
+            <td class="text-end">{{ fila.monto | moneda }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3">
+            <div class="empty-state">
+              <i class="bi bi-cash-coin empty-state-icono"></i>
+              <span class="empty-state-titulo">Todavía no hay ventas en este turno</span>
+              <span class="empty-state-texto">Se cargan al registrar ventas.</span>
+            </div>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Últimos movimientos (ingresos/egresos)</span>
+      <a href="{{ url_for('caja.movimientos') }}" class="btn btn-sm btn-outline-secondary">+ Movimiento</a>
+    </div>
+    <div class="list-group list-group-flush">
+      {% for mov in movimientos %}
+      <div class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+          {% if mov.tipo.value == 'EGRESO' %}
+            <i class="bi bi-arrow-up-circle text-danger"></i> <strong class="text-danger">− {{ mov.monto | moneda }}</strong>
+          {% elif mov.tipo.value == 'INGRESO' %}
+            <i class="bi bi-arrow-down-circle text-success"></i> <strong class="text-success">+ {{ mov.monto | moneda }}</strong>
+          {% else %}
+            <i class="bi bi-cash-coin"></i> <strong>{{ mov.monto | moneda }}</strong>
+          {% endif %}
+          {{ mov.motivo or '—' }}
+        </span>
+        <span class="text-muted small">
+          {{ mov.categoria.value if mov.categoria else '' }}
+          {% if mov.proveedor %}· {{ mov.proveedor.nombre }}{% endif %}
+          · {{ mov.fecha_hora.strftime('%H:%M') }} · {{ mov.usuario.nombre }}
+        </span>
+      </div>
+      {% else %}
+      <div class="list-group-item">
+        <div class="empty-state">
+          <i class="bi bi-inbox empty-state-icono"></i>
+          <span class="empty-state-texto">Sin movimientos todavía.</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

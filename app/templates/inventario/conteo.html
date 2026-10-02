@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Conteo físico{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Conteo físico</h1>
+    <div class="page-meta">Reconcilia el stock real contra el del sistema (detecta merma/desperdicio).</div>
+  </div>
+  <div class="page-accion">
+    <a href="{{ url_for('inventario.lista') }}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</header>
+
+<form method="post" id="form-conteo">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="card mb-3">
+    <div class="card-header">Contar stock</div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Insumo</th>
+            <th class="text-end">Sistema</th>
+            <th style="width:150px;">Contado</th>
+            <th class="text-end">Dif.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for insumo in insumos %}
+          {% set sistema = stock_insumo(insumo) %}
+          <tr data-sistema="{{ sistema }}">
+            <td>{{ insumo.nombre }}</td>
+            <td class="text-end text-muted">{{ sistema }} {{ insumo.unidad }}</td>
+            <td>
+              <input type="text" inputmode="decimal" name="cantidad_{{ insumo.id }}"
+                     class="form-control form-control-sm celda-contado" placeholder="{{ sistema }}">
+            </td>
+            <td class="text-end celda-dif text-muted">—</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-muted py-4">
+            No hay insumos activos para contar. Cargalos en Proveedores.
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">Resumen y ajuste</div>
+    <div class="card-body">
+      <div class="small mb-2" style="max-width: 360px;">
+        <div class="d-flex justify-content-between border-bottom py-1">
+          <span>Items con diferencia</span><strong id="resumen-items">0</strong>
+        </div>
+      </div>
+      <div class="mb-2">
+        <label class="form-label small">Motivo del ajuste (obligatorio si hay diferencias)</label>
+        <textarea name="motivo" rows="2" class="form-control"
+                  placeholder="Merma por manipulación, desperdicio, ajuste de balanza…"></textarea>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Aplicar ajuste</button>
+        <a href="{{ url_for('inventario.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+      <div class="form-text mt-2">
+        Aplicar el ajuste genera movimiento(s) de inventario + registro de auditoría. Todo-o-nada.
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function parsear(v) {
+    v = (v || '').trim().replace(/\s/g, '');
+    if (!v) return null;
+    if (v.indexOf(',') >= 0) v = v.replace(/\./g, '').replace(',', '.');
+    var n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  }
+
+  function recalcular() {
+    var conDif = 0;
+    document.querySelectorAll('#form-conteo tbody tr[data-sistema]').forEach(function (fila) {
+      var sistema = parseFloat(fila.dataset.sistema);
+      var contado = parsear(fila.querySelector('.celda-contado').value);
+      var celda = fila.querySelector('.celda-dif');
+      if (contado === null) {
+        celda.textContent = '—';
+        celda.className = 'text-end celda-dif text-muted';
+        return;
+      }
+      var dif = sistema - contado;
+      if (Math.abs(dif) < 0.0005) {
+        celda.textContent = 'OK';
+        celda.className = 'text-end celda-dif text-success';
+      } else {
+        conDif += 1;
+        celda.textContent = (dif > 0 ? '−' : '+') + Math.abs(dif).toFixed(3).replace(/\.?0+$/, '');
+        celda.className = 'text-end celda-dif text-danger';
+      }
+    });
+    document.getElementById('resumen-items').textContent = conDif;
+  }
+
+  document.querySelectorAll('.celda-contado').forEach(function (input) {
+    input.addEventListener('input', recalcular);
+  });
+</script>
+{% endblock %}

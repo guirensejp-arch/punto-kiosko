@@ -1,0 +1,18 @@
+# Entorno
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Base de datos local
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups / temporales
+*.bak
+*.bak-*
+*.log

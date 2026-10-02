@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Venta #{{ venta.numero }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">
+      Venta #{{ venta.numero }}
+      <span class="badge {{ clases[venta.estado.value] }}">{{ etiquetas[venta.estado.value] }}</span>
+    </h1>
+    <div class="page-meta">
+      {{ venta.fecha_hora.strftime('%d/%m/%Y %H:%M') }} · por {{ venta.usuario.nombre_completo }}
+    </div>
+  </div>
+  <div class="page-accion d-flex flex-wrap gap-2 align-items-center">
+    <a href="{{ url_for('ventas.lista') }}" class="btn btn-outline-secondary">Volver</a>
+    <a href="{{ url_for('ventas.ticket', venta_id=venta.id) }}?auto=1" target="_blank" class="btn btn-outline-secondary">Imprimir ticket</a>
+    {% if venta.estado.value == 'CONFIRMADA' %}
+    <form method="post" action="{{ url_for('ventas.anular', venta_id=venta.id) }}"
+          onsubmit="return confirm('¿Anular la venta #{{ venta.numero }}? Se revierte stock y caja.');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-outline-danger">Anular</button>
+    </form>
+    {% endif %}
+  </div>
+</header>
+
+<div class="row g-3">
+  <div class="col-12 col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">Artículos</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <tbody>
+            {% for detalle in venta.detalles %}
+            <tr>
+              <td>{{ detalle.articulo.nombre }} × {{ detalle.cantidad }}</td>
+              <td class="text-end">{{ detalle.subtotal | moneda }}</td>
+            </tr>
+            {% endfor %}
+            <tr><td>Subtotal</td><td class="text-end">{{ venta.subtotal | moneda }}</td></tr>
+            {% if venta.descuento %}
+            <tr><td>Descuento manual</td><td class="text-end">− {{ venta.descuento | moneda }}</td></tr>
+            {% endif %}
+            {% if venta.descuento_promocion %}
+            <tr><td>Promoción{% if venta.promocion %} ({{ venta.promocion.nombre }}){% endif %}</td><td class="text-end">− {{ venta.descuento_promocion | moneda }}</td></tr>
+            {% endif %}
+            <tr class="fw-bold"><td>Total</td><td class="text-end">{{ venta.total | moneda }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Pago</div>
+      <div class="card-body small">
+        <div><span class="text-muted">Medio:</span> {{ venta.metodo_pago.nombre if venta.metodo_pago else '—' }}</div>
+        {% if venta.pago_recibido %}<div><span class="text-muted">Recibido:</span> {{ venta.pago_recibido | moneda }}</div>{% endif %}
+        {% if venta.vuelto %}<div><span class="text-muted">Vuelto:</span> {{ venta.vuelto | moneda }}</div>{% endif %}
+        <div><span class="text-muted">Notas:</span> {{ venta.notas or '—' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6">
+    <div class="card">
+      <div class="card-header">Cliente</div>
+      <div class="card-body small">
+        {% if venta.cliente %}
+        <div><span class="text-muted">Nombre:</span> {{ venta.cliente.nombre_completo }}</div>
+        <div><span class="text-muted">Teléfono:</span> {{ venta.cliente.telefono | telefono }}</div>
+        <div><span class="text-muted">Compras previas:</span> {{ venta.cliente.ventas | length }}</div>
+        <a href="{{ url_for('clientes.detalle', cliente_id=venta.cliente.id) }}" class="btn btn-sm btn-outline-secondary mt-2">Ver historial de cliente</a>
+        {% else %}
+        <div class="text-muted">Venta ocasional (sin cliente).</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

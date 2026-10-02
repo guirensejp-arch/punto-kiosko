@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Agregar unidades · {{ insumo.nombre }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">Agregar unidades</h1>
+        <div class="page-meta">
+          {{ insumo.nombre }} · {{ proveedor.nombre }}
+        </div>
+      </div>
+      <div class="page-accion">
+        <a href="{{ url_for('proveedores.detalle', proveedor_id=proveedor.id) }}" class="btn btn-outline-secondary">Atrás</a>
+      </div>
+    </header>
+
+    <div class="card mb-3">
+      <div class="card-body small d-flex flex-wrap gap-4">
+        <div><span class="text-muted">Proveedor:</span> {{ proveedor.nombre }}</div>
+        <div><span class="text-muted">Insumo:</span> {{ insumo.nombre }}</div>
+        <div><span class="text-muted">Stock actual:</span> {{ stock }} {{ insumo.unidad }}</div>
+        <div><span class="text-muted">Último costo:</span> {{ insumo.costo | moneda }} / {{ insumo.unidad }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-3">
+            <div class="col-6 col-md-4">
+              {{ form.cantidad.label(class="form-label") }}
+              {{ form.cantidad(class="form-control", placeholder="5,0") }}
+              {% for error in form.cantidad.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-6 col-md-4">
+              {{ form.unidad.label(class="form-label") }}
+              {{ form.unidad(class="form-select") }}
+              {% for error in form.unidad.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-4">
+              {{ form.costo.label(class="form-label") }}
+              {{ form.costo(class="form-control", placeholder="$ 7.000") }}
+              {% for error in form.costo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-6 col-md-4">
+              {{ form.numero.label(class="form-label") }}
+              {{ form.numero(class="form-control", placeholder="#41") }}
+              {% for error in form.numero.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-6 col-md-4">
+              {{ form.fecha_vencimiento.label(class="form-label") }}
+              {{ form.fecha_vencimiento(class="form-control") }}
+              {% for error in form.fecha_vencimiento.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-4">
+              {{ form.motivo.label(class="form-label") }}
+              {{ form.motivo(class="form-control", placeholder="Compra de insumos (opcional)") }}
+              {% for error in form.motivo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="form-text mt-3">
+            La cantidad se convierte a la unidad del insumo (kg↔g, l↔ml) antes de guardarse.
+            Esta compra genera un <strong>egreso en caja</strong>, un <strong>lote</strong> en
+            inventario y su <strong>ticket de compra</strong>.
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Registrar compra</button>
+            <a href="{{ url_for('proveedores.detalle', proveedor_id=proveedor.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

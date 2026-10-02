@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar usuario' if usuario else 'Nuevo usuario' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <h1 class="h4 mb-3">{{ 'Editar usuario' if usuario else 'Nuevo usuario' }}</h1>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              {{ form.nombre.label(class="form-label") }}
+              {{ form.nombre(class="form-control") }}
+              {% for error in form.nombre.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.apellido.label(class="form-label") }}
+              {{ form.apellido(class="form-control") }}
+              {% for error in form.apellido.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              {{ form.email_personal.label(class="form-label") }}
+              {{ form.email_personal(class="form-control", type="email") }}
+              {% for error in form.email_personal.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.rol.label(class="form-label") }}
+              {{ form.rol(class="form-select") }}
+            </div>
+            <div class="col-12 col-md-6 d-flex align-items-end">
+              <div class="form-check form-switch mb-2">
+                {{ form.activo(class="form-check-input") }}
+                {{ form.activo.label(class="form-check-label") }}
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.password.label(class="form-label") }}
+              {{ form.password(class="form-control", autocomplete="new-password") }}
+              <div class="form-text">{{ 'Dejar vacío para no cambiarla.' if usuario else 'Obligatoria al crear.' }}</div>
+              {% for error in form.password.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.confirmar_password.label(class="form-label") }}
+              {{ form.confirmar_password(class="form-control", autocomplete="new-password") }}
+              {% for error in form.confirmar_password.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{{ url_for('usuarios.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
