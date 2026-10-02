@@ -17,7 +17,7 @@ def create_app(config_name='default'):
     migrate.init_app(app, db)
     csrf.init_app(app)
 
-    # Branding white-label (Día 0): expone `branding` a todos los templates.
+    # Marca (nombre, logo, colores): expone `branding` a todos los templates.
     from app.utils.branding import init_branding
 
     init_branding(app)

@@ -5,7 +5,7 @@ persiste nada ni modifica modelos: todo se calcula con consultas agregadas
 sobre los datos existentes. El dinero se mantiene como entero en centavos.
 
 Métricas que son estimaciones (se marcan como tales en la UI):
-- ``costo_estimado`` / ``margen_estimado``: food cost *actual* (``insumo.costo``
+- ``costo_estimado`` / ``margen_estimado``: costo *actual* (``insumo.costo``
   se recalcula en vivo), no el costo histórico al momento de la venta.
 - ``valor_stock``: valor a costo actual de los insumos, no costo por lote.
 """
@@ -54,20 +54,6 @@ ORDENES = {'UNIDADES': 'Unidades', 'FACTURACION': 'Facturación'}
 
 # Umbral de stock bajo (mismo criterio que las notificaciones).
 UMBRAL_STOCK_BAJO = 1
-
-ETIQUETAS_ORIGEN = {
-    'MOSTRADOR': 'Mostrador',
-    'WHATSAPP': 'WhatsApp',
-    'PEDIDOSYA': 'PedidosYa',
-    'RAPPI': 'Rappi',
-    'OTRO': 'Otro',
-}
-
-ETIQUETAS_ENTREGA = {
-    'RETIRO': 'Retiro',
-    'DELIVERY': 'Delivery',
-    'MOZO': 'Mozo',
-}
 
 ETIQUETAS_CATEGORIA_CAJA = {
     'PROVEEDOR': 'Compras a proveedores',
@@ -182,7 +168,7 @@ def _pedidos_agregados(ventana):
 
 
 def _costo_estimado(ventana):
-    """Costo del período, estimado con el food cost actual de cada articulo."""
+    """Costo del período, estimado con el costo actual de cada artículo."""
     filas = db.session.query(
         VentaDetalle.articulo_id,
         func.sum(VentaDetalle.cantidad),

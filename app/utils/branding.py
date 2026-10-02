@@ -1,11 +1,11 @@
-"""Carga del branding white-label desde branding.yaml (Día 0)."""
+"""Carga de la configuración de marca desde branding.yaml."""
 
 import yaml
 from flask import current_app
 
 _DEFAULTS = {
     'negocio': {
-        'nombre': 'Comanda',
+        'nombre': 'Punto Kiosko',
         'emoji': '',
         'orden': 'nombre_logo',
         'logo': 'branding/logo_cliente.svg',
@@ -13,15 +13,15 @@ _DEFAULTS = {
     },
     'leudar': {
         'nombre': 'LeudAr Labs',
-        'articulo': 'Comanda',
+        'producto': 'Punto Kiosko',
         'logo': 'branding/logo_leudar.svg',
         'marca_agua': True,
     },
     'colores': {
-        'primario': '#263238',
-        'secundario': '#e65100',
-        'acento': '#f9a825',
-        'fondo': '#eceff1',
+        'primario': '#16223A',
+        'secundario': '#E4572E',
+        'acento': '#B23A1B',
+        'fondo': '#F4F5F7',
     },
     'footer': {
         'texto': '',

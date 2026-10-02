@@ -190,8 +190,6 @@
   }
 
   tarta('graficoMetodos', datos.metodos);
-  tarta('graficoOrigenes', datos.origenes);
-  tarta('graficoEntregas', datos.entregas);
 
   function barraHorizontal(id, bloque, etiqueta, formateador) {
     crear(id, {

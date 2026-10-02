@@ -26,8 +26,8 @@ class Proveedor(db.Model):
 class Insumo(db.Model):
     """Insumo/mercadería comprada a un proveedor.
 
-    `costo` es el último costo unitario, entero en centavos. Alimenta el food
-    cost de las recetas (que se recalcula en vivo, no se persiste).
+    `costo` es el último costo unitario, entero en centavos. Alimenta el costo
+    de los artículos elaborados (que se recalcula en vivo, no se persiste).
     """
 
     __tablename__ = 'insumo'

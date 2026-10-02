@@ -1,7 +1,7 @@
-"""Cálculo de food cost y margen (derivados, nunca persistidos).
+"""Cálculo de costo y margen (derivados, nunca persistidos).
 
-El food cost se recalcula en vivo: si cambia el costo de un insumo, las recetas
-que lo usan reflejan el nuevo valor sin guardar datos duplicados.
+El costo se recalcula en vivo: si cambia el costo de un insumo, los artículos
+elaborados que lo usan reflejan el nuevo valor sin guardar datos duplicados.
 """
 
 from decimal import Decimal

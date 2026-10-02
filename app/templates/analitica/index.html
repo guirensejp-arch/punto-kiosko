@@ -160,39 +160,23 @@
 </div>
 
 <div class="row g-3 mb-3">
-  <div class="col-12 col-lg-4">
+  <div class="col-12 col-lg-6">
     <div class="card h-100">
       <div class="card-header">Cantidad de ventas por día</div>
       <div class="card-body"><canvas id="graficoPedidos" height="160"></canvas></div>
     </div>
   </div>
-  <div class="col-12 col-lg-4">
+  <div class="col-12 col-lg-6">
     <div class="card h-100">
       <div class="card-header">Ticket promedio por día</div>
       <div class="card-body"><canvas id="graficoTicket" height="160"></canvas></div>
     </div>
   </div>
-  <div class="col-12 col-lg-4">
-    <div class="card h-100">
-      <div class="card-header">Ventas por tipo de entrega</div>
-      <div class="card-body"><canvas id="graficoEntregas" height="160"></canvas></div>
-    </div>
-  </div>
 </div>
 
-<div class="row g-3 mb-3">
-  <div class="col-12 col-lg-4">
-    <div class="card h-100">
-      <div class="card-header">Ventas por origen</div>
-      <div class="card-body"><canvas id="graficoOrigenes" height="160"></canvas></div>
-    </div>
-  </div>
-  <div class="col-12 col-lg-8">
-    <div class="card h-100">
-      <div class="card-header">Top 10 artículos por unidades</div>
-      <div class="card-body"><canvas id="graficoTopUnidades" height="160"></canvas></div>
-    </div>
-  </div>
+<div class="card mb-3">
+  <div class="card-header">Top 10 artículos por unidades</div>
+  <div class="card-body"><canvas id="graficoTopUnidades" height="160"></canvas></div>
 </div>
 
 <div class="card mb-3">
@@ -202,7 +186,7 @@
 
 <div class="card mb-3">
   <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <span>Productos</span>
+    <span>Artículos</span>
     <div class="segmented">
       {% for valor, etiqueta in ordenes.items() %}
       <a href="{{ url_for('analitica.index', periodo=periodo, desde=desde, hasta=hasta, orden=valor) }}"

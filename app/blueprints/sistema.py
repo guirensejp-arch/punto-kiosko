@@ -96,4 +96,4 @@ def backup():
         return redirect(url_for('sistema.index'))
 
     registrar('BACKUP_BASE', 'sistema')
-    return send_file(ruta, as_attachment=True, download_name='comanda_backup.db')
+    return send_file(ruta, as_attachment=True, download_name='punto_kiosko_backup.db')
