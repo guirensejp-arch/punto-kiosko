@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Ingreso de mercadería{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Ingreso de mercadería</h1>
+    <div class="page-meta">Escaneá el código de barras para cargar stock</div>
+  </div>
+  <div class="page-accion">
+    <a href="{{ url_for('inventario.lista') }}" class="btn btn-outline-secondary">Volver a inventario</a>
+  </div>
+</header>
+
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-6">
+    {% if mensaje %}
+    <div class="alert alert-{{ mensaje.tipo }}">{{ mensaje.texto }}</div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" id="form-ingreso">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label" for="codigo">Código de barras</label>
+            <input type="text" id="codigo" name="codigo" class="form-control form-control-lg"
+                   placeholder="Escaneá o escribí el código…" autocomplete="off" autofocus required>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label" for="cantidad">Cantidad</label>
+              <input type="number" id="cantidad" name="cantidad" class="form-control" value="1" min="0.001" step="0.001">
+            </div>
+            <div class="col-6">
+              <label class="form-label" for="direccion">Movimiento</label>
+              <select id="direccion" name="direccion" class="form-select">
+                <option value="sumar">Sumar (ingreso)</option>
+                <option value="restar">Restar (corrección)</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-box-arrow-in-down"></i> Cargar stock
+          </button>
+        </form>
+      </div>
+    </div>
+    <p class="form-text mt-2">Aplica a artículos con <strong>stock propio</strong> (reventa). El lector HID completa el código y envía Enter.</p>
+  </div>
+</div>
+{% endblock %}

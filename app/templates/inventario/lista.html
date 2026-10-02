@@ -15,6 +15,9 @@
     </div>
   </div>
   <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('inventario.ingreso') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-box-arrow-in-down"></i> Ingreso de mercadería
+    </a>
     <a href="{{ url_for('inventario.conteo') }}" class="btn btn-outline-secondary">Conteo físico</a>
     <a href="{{ url_for('inventario.nuevo_lote') }}" class="btn btn-primary" title="Alta de stock sin egreso de caja (carga inicial o ajuste puntual)">Carga inicial (sin caja)</a>
   </div>
@@ -53,9 +56,71 @@
   </div>
 </div>
 
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Artículos de reventa</span>
+    <a href="{{ url_for('articulos.lista') }}" class="btn btn-sm btn-outline-secondary">Ver catálogo</a>
+  </div>
+  <div class="table-responsive d-none d-md-block">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Artículo</th>
+          <th>Categoría</th>
+          <th class="text-end">Precio</th>
+          <th class="text-end">Stock</th>
+          <th class="text-end">Unidad</th>
+          <th class="text-center">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for art in articulos %}
+        <tr>
+          <td>{{ art.nombre }}</td>
+          <td>{{ art.categoria or '—' }}</td>
+          <td class="text-end">{{ art.precio_venta | moneda }}</td>
+          <td class="text-end">{{ art.stock }}</td>
+          <td class="text-end">{{ art.unidad }}</td>
+          <td class="text-center">
+            {% if art.stock and art.stock > 0 %}
+              <span class="badge badge-estado-ok">En stock</span>
+            {% else %}
+              <span class="badge badge-estado-vencida">Sin stock</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <i class="bi bi-box2 empty-state-icono"></i>
+              <span class="empty-state-titulo">No hay artículos de reventa</span>
+              <span class="empty-state-texto">Marcá un artículo como «stock propio» para verlo acá.</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="d-md-none">
+    {% for art in articulos %}
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+      <span><strong>{{ art.nombre }}</strong><br><span class="text-muted small">{{ art.categoria or '—' }} · {{ art.stock }} {{ art.unidad }}</span></span>
+      <span class="fw-semibold">{{ art.precio_venta | moneda }}</span>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-box2 empty-state-icono"></i>
+      <span class="empty-state-titulo">No hay artículos de reventa</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
-    <span>Insumos y sus lotes</span>
+    <span>Insumos y lotes (elaborados)</span>
     <a href="{{ url_for('inventario.exportar_xlsx') }}" class="btn btn-sm btn-outline-secondary">Exportar Excel</a>
   </div>
   <div class="table-responsive d-none d-md-block">

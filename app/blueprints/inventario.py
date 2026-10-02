@@ -6,7 +6,8 @@ from openpyxl import Workbook
 
 from app.extensions import db
 from app.forms import LoteForm
-from app.models.inventario import Lote, Conteo, TipoMovimientoInventario
+from app.models.inventario import Lote, Conteo, MovimientoInventario, TipoMovimientoInventario
+from app.models.articulo import Articulo, CodigoBarras
 from app.models.proveedor import Insumo
 from app.models.sistema import Configuracion
 from app.services.inventario_service import (
@@ -71,15 +72,73 @@ def lista():
         .all()
     ]
 
+    # Artículos de reventa: stock propio, sin lote.
+    consulta_art = Articulo.query.filter_by(activo=True, stock_propio=True)
+    if q:
+        consulta_art = consulta_art.filter(Articulo.nombre.ilike(f'%{q}%'))
+    if rubro:
+        consulta_art = consulta_art.filter(Articulo.categoria == rubro)
+    articulos = consulta_art.order_by(Articulo.categoria, Articulo.nombre).all()
+    categorias = [
+        c[0]
+        for c in db.session.query(Articulo.categoria)
+        .filter(Articulo.activo.is_(True), Articulo.stock_propio.is_(True),
+                Articulo.categoria.isnot(None))
+        .distinct()
+        .order_by(Articulo.categoria)
+        .all()
+    ]
+    # Unifica el filtro de rubro/categoría para el <select>.
+    filtros = sorted(set(rubros) | set(categorias))
+
     return render_template(
         'inventario/lista.html',
         lotes=lotes,
-        rubros=rubros,
+        articulos=articulos,
+        rubros=filtros,
         q=q,
         rubro=rubro,
         vencimiento=vencimiento,
         config=Configuracion.get(),
     )
+
+
+@inventario_bp.route('/ingreso', methods=['GET', 'POST'])
+@login_required
+def ingreso():
+    """Ingreso rápido de mercadería: escaneás el código y suma stock al artículo.
+
+    Pensado para kioscos: al recibir un pedido, se escanea cada bulto.
+    Solo aplica a artículos con stock propio (reventa).
+    """
+    mensaje = None
+    if request.method == 'POST':
+        codigo = (request.form.get('codigo') or '').strip()
+        cantidad = parsear_decimal(request.form.get('cantidad') or '1') or 1
+        d = request.form.get('direccion') or 'sumar'
+        art = None
+        if codigo:
+            cb = CodigoBarras.query.filter_by(codigo=codigo, activo=True).first()
+            if cb is not None:
+                art = cb.articulo
+        if art is None:
+            mensaje = {'tipo': 'danger', 'texto': f'Sin artículo para el código {codigo!r}.'}
+        elif not art.stock_propio:
+            mensaje = {'tipo': 'warning', 'texto': f'{art.nombre} no maneja stock propio.'}
+        else:
+            delta = cantidad if d == 'sumar' else -cantidad
+            art.stock = (art.stock or 0) + delta
+            db.session.add(MovimientoInventario(
+                articulo_id=art.id,
+                tipo=TipoMovimientoInventario.CARGA if delta >= 0 else TipoMovimientoInventario.AJUSTE,
+                cantidad=delta,
+                usuario_id=current_user.id,
+                motivo='Ingreso de mercadería',
+            ))
+            db.session.commit()
+            registrar('INGRESO_STOCK', 'articulo', art.id, {'delta': float(delta)})
+            mensaje = {'tipo': 'success', 'texto': f'{art.nombre}: stock {art.stock} {art.unidad}.'}
+    return render_template('inventario/ingreso.html', mensaje=mensaje)
 
 
 @inventario_bp.route('/lote/nuevo', methods=['GET', 'POST'])

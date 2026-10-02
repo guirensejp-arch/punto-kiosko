@@ -1,12 +1,18 @@
 {% extends 'base.html' %}
-{% block title %}Recetas / Productos{% endblock %}
+{% block title %}Artículos{% endblock %}
 
 {% block content %}
 <header class="page-header">
-  <h1 class="page-title">Recetas / Productos</h1>
+  <h1 class="page-title">Artículos</h1>
   {% if current_user.rol.value == 'ADMIN' %}
-  <div class="page-accion">
-    <a href="{{ url_for('articulos.nuevo') }}" class="btn btn-primary">+ Nueva receta</a>
+  <div class="page-accion d-flex flex-wrap gap-2">
+    <a href="{{ url_for('articulos.importar') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-upload"></i> Importar
+    </a>
+    <a href="{{ url_for('articulos.remarcar') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-currency-exchange"></i> Remarcar precios
+    </a>
+    <a href="{{ url_for('articulos.nuevo') }}" class="btn btn-primary">+ Nuevo artículo</a>
   </div>
   {% endif %}
 </header>

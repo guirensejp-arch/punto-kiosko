@@ -6,7 +6,7 @@ from app.decorators import admin_required
 from app.extensions import db
 from app.forms import ProductoForm, ProductoInsumoForm
 from app.models.proveedor import Insumo
-from app.models.articulo import Articulo, ArticuloInsumo
+from app.models.articulo import Articulo, ArticuloInsumo, CodigoBarras
 from app.services.food_cost import costo_producto, margen_producto
 from app.utils.auditoria import registrar
 from app.utils.excel import (
@@ -275,3 +275,203 @@ def exportar_xlsx():
     hoja.freeze_panes = 'A2'
 
     return respuesta_xlsx(libro, 'articulos.xlsx')
+
+
+def _preview_remarcar(articulos, modo, valor):
+    """Calcula precio nuevo por artículo sin guardar. Devuelve (filas, con_cambio)."""
+    filas = []
+    con_cambio = 0
+    for art in articulos:
+        if modo == 'PORCENTAJE':
+            nuevo = int(round(art.precio_venta * (1 + valor / 100)))
+        else:  # MONTO: suma fija de valor (puede ser negativa)
+            nuevo = art.precio_venta + valor
+        if nuevo < 0:
+            nuevo = 0
+        if nuevo != art.precio_venta:
+            con_cambio += 1
+        filas.append({'articulo': art, 'nuevo': nuevo})
+    return filas, con_cambio
+
+
+@articulos_bp.route('/remarcar', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def remarcar():
+    """Remarcado masivo de precios por categoría o para todos.
+
+    Modos: porcentaje (+/-) o monto fijo (+/-) en pesos. Muestra una previsualización
+    y aplica recién al confirmar.
+    """
+    categoria = (request.args.get('categoria') or request.form.get('categoria') or '').strip()
+    modo = (request.form.get('modo') or request.args.get('modo') or 'PORCENTAJE').strip()
+    valor_txt = (request.form.get('valor') or request.args.get('valor') or '').strip()
+    aplicar = request.form.get('aplicar') == '1'
+
+    categorias = [
+        c[0]
+        for c in db.session.query(Articulo.categoria)
+        .filter(Articulo.activo.is_(True), Articulo.categoria.isnot(None))
+        .distinct()
+        .order_by(Articulo.categoria)
+        .all()
+    ]
+
+    articulos = None
+    filas = []
+    con_cambio = 0
+    valor = None
+
+    if valor_txt:
+        if modo == 'PORCENTAJE':
+            valor = parsear_decimal(valor_txt)
+        else:
+            valor = parsear_centavos(valor_txt)
+        if valor is None:
+            flash('Valor inválido.', 'danger')
+        else:
+            consulta = Articulo.query.filter_by(activo=True)
+            if categoria:
+                consulta = consulta.filter(Articulo.categoria == categoria)
+            articulos = consulta.order_by(Articulo.categoria, Articulo.nombre).all()
+            filas, con_cambio = _preview_remarcar(articulos, modo, valor)
+
+            if aplicar:
+                for fila in filas:
+                    fila['articulo'].precio_venta = fila['nuevo']
+                db.session.commit()
+                registrar(
+                    'REMARCAR_PRECIOS', 'articulo', None,
+                    {'modo': modo, 'valor': float(valor), 'categoria': categoria or 'TODAS',
+                     'artefactos': len(filas)},
+                )
+                flash(f'Precios actualizados: {len(articulos)} artículos.', 'success')
+                return redirect(url_for('articulos.lista'))
+
+    return render_template(
+        'articulos/remarcar.html',
+        categorias=categorias,
+        categoria=categoria,
+        modo=modo,
+        valor_txt=valor_txt,
+        filas=filas,
+        con_cambio=con_cambio,
+        aplicado=aplicar and articulos is not None,
+    )
+
+
+COLUMNAS_IMPORT = [
+    'nombre', 'categoria', 'sku', 'codigo_barras',
+    'precio_venta', 'precio_costo', 'stock', 'unidad', 'stock_propio',
+]
+
+
+def _leer_filas_import(archivo):
+    """Lee CSV o XLSX y devuelve lista de dicts con las columnas esperadas."""
+    nombre = (archivo.filename or '').lower()
+    filas = []
+    if nombre.endswith('.xlsx'):
+        from openpyxl import load_workbook
+
+        libro = load_workbook(archivo, read_only=True, data_only=True)
+        hoja = libro.active
+        iterador = hoja.iter_rows(values_only=True)
+        encabezados = None
+        for crudo in iterador:
+            if encabezados is None:
+                encabezados = [str(c).strip().lower() if c is not None else '' for c in crudo]
+                continue
+            filas.append(dict(zip(encabezados, crudo)))
+        libro.close()
+    else:
+        import csv
+        import io
+
+        texto = archivo.read().decode('utf-8-sig')
+        lector = csv.DictReader(io.StringIO(texto))
+        for crudo in lector:
+            filas.append({(k or '').strip().lower(): v for k, v in crudo.items()})
+    return filas
+
+
+@articulos_bp.route('/importar', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def importar():
+    """Importa/actualiza artículos desde CSV o XLSX.
+
+    Columnas: nombre, categoria, sku, codigo_barras, precio_venta, precio_costo,
+    stock, unidad, stock_propio. Se actualiza por SKU o código de barras si existe.
+    """
+    resultado = None
+    if request.method == 'POST':
+        archivo = request.files.get('archivo')
+        if archivo is None or not archivo.filename:
+            flash('Elegí un archivo CSV o XLSX.', 'danger')
+            return redirect(url_for('articulos.importar'))
+        try:
+            crudas = _leer_filas_import(archivo)
+        except Exception as error:  # noqa: BLE001 - mostrar el error al usuario
+            flash(f'No se pudo leer el archivo: {error}', 'danger')
+            return redirect(url_for('articulos.importar'))
+
+        creados = actualizados = errores = 0
+        for cruda in crudas:
+            nombre = str(cruda.get('nombre') or '').strip()
+            if not nombre:
+                errores += 1
+                continue
+            sku = str(cruda.get('sku') or '').strip() or None
+            codigo = str(cruda.get('codigo_barras') or '').strip() or None
+
+            articulo = None
+            if sku:
+                articulo = Articulo.query.filter_by(sku=sku).first()
+            if articulo is None and codigo:
+                cb = CodigoBarras.query.filter_by(codigo=codigo).first()
+                if cb is not None:
+                    articulo = cb.articulo
+
+            try:
+                precio = parsear_centavos(str(cruda.get('precio_venta') or '0'))
+            except ValueError:
+                errores += 1
+                continue
+            try:
+                costo = parsear_centavos(str(cruda.get('precio_costo') or '0'))
+            except ValueError:
+                costo = 0
+            stock_txt = str(cruda.get('stock') or '').strip()
+            unidad = str(cruda.get('unidad') or 'ud').strip() or 'ud'
+            propio = str(cruda.get('stock_propio') or '').strip().lower() in ('1', 'si', 'sí', 'true', 'x')
+
+            if articulo is None:
+                articulo = Articulo(nombre=nombre, precio_venta=precio)
+                db.session.add(articulo)
+                creados += 1
+            else:
+                actualizados += 1
+            articulo.nombre = nombre
+            articulo.categoria = str(cruda.get('categoria') or '').strip() or None
+            articulo.sku = sku
+            articulo.precio_venta = precio
+            articulo.precio_costo = costo
+            if stock_txt:
+                valor_stock = parsear_decimal(stock_txt)
+                if valor_stock is not None:
+                    articulo.stock = valor_stock
+            articulo.unidad = unidad
+            if propio:
+                articulo.stock_propio = True
+            db.session.flush()
+
+            if codigo and CodigoBarras.query.filter_by(codigo=codigo).first() is None:
+                db.session.add(CodigoBarras(codigo=codigo, articulo_id=articulo.id))
+
+        db.session.commit()
+        registrar('IMPORTAR_ARTICULOS', 'articulo', None,
+                  {'creados': creados, 'actualizados': actualizados, 'errores': errores})
+        resultado = {'creados': creados, 'actualizados': actualizados, 'errores': errores}
+        flash(f'Importación: {creados} creados, {actualizados} actualizados, {errores} con error.', 'success')
+
+    return render_template('articulos/importar.html', columnas=COLUMNAS_IMPORT, resultado=resultado)

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Importar artículos{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Importar artículos</h1>
+    <div class="page-meta">Alta masiva desde CSV o XLSX</div>
+  </div>
+  <div class="page-accion">
+    <a href="{{ url_for('articulos.lista') }}" class="btn btn-outline-secondary">Volver a artículos</a>
+  </div>
+</header>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="card">
+      <div class="card-header">Archivo</div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label" for="archivo">Archivo CSV o XLSX</label>
+            <input type="file" id="archivo" name="archivo" class="form-control" accept=".csv,.xlsx">
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Importar</button>
+        </form>
+      </div>
+    </div>
+
+    {% if resultado %}
+    <div class="card mt-3">
+      <div class="card-body d-flex flex-wrap gap-3">
+        <span><strong>{{ resultado.creados }}</strong> creados</span>
+        <span><strong>{{ resultado.actualizados }}</strong> actualizados</span>
+        <span class="text-danger">{{ resultado.errores }} con error</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="card">
+      <div class="card-header">Formato esperado</div>
+      <div class="card-body small">
+        <p class="mb-2">Primera fila: encabezados. Columnas:</p>
+        <ul class="mb-2">
+          {% for col in columnas %}<li><code>{{ col }}</code></li>{% endfor %}
+        </ul>
+        <p class="text-muted mb-0">
+          Se actualiza por <code>sku</code> o <code>codigo_barras</code> si ya existe; si no, se crea.
+          <code>precio_venta</code> es obligatorio. <code>stock_propio</code> acepta 1/si/true.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

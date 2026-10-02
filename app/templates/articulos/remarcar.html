@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Remarcar precios{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Remarcar precios</h1>
+    <div class="page-meta">Actualización masiva por porcentaje o monto fijo</div>
+  </div>
+  <div class="page-accion">
+    <a href="{{ url_for('articulos.lista') }}" class="btn btn-outline-secondary">Volver a artículos</a>
+  </div>
+</header>
+
+<div class="card mb-3">
+  <div class="card-header">Ajuste</div>
+  <div class="card-body">
+    <form method="post" class="row g-2 align-items-end">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="col-12 col-md-4">
+        <label class="form-label small mb-1" for="categoria">Categoría</label>
+        <select name="categoria" id="categoria" class="form-select">
+          <option value="">Todas las categorías</option>
+          {% for c in categorias %}
+          <option value="{{ c }}" {{ 'selected' if c == categoria else '' }}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1" for="modo">Modo</label>
+        <select name="modo" id="modo" class="form-select">
+          <option value="PORCENTAJE" {{ 'selected' if modo == 'PORCENTAJE' else '' }}>Porcentaje (%)</option>
+          <option value="MONTO" {{ 'selected' if modo == 'MONTO' else '' }}>Monto fijo ($)</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1" for="valor">Valor (ej. 10 o -5)</label>
+        <input type="text" name="valor" id="valor" class="form-control" value="{{ valor_txt }}" placeholder="10">
+      </div>
+      <div class="col-12 col-md-2">
+        <button type="submit" class="btn btn-outline-secondary w-100">Previsualizar</button>
+      </div>
+    </form>
+    <p class="form-text mt-2 mb-0">
+      Usá valores negativos para bajar precios (ej. <code>-5</code>). El cambio se aplica solo al confirmar.
+    </p>
+  </div>
+</div>
+
+{% if filas %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Previsualización · {{ filas | length }} artículos · {{ con_cambio }} cambian</span>
+    {% if con_cambio %}
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="categoria" value="{{ categoria }}">
+      <input type="hidden" name="modo" value="{{ modo }}">
+      <input type="hidden" name="valor" value="{{ valor_txt }}">
+      <input type="hidden" name="aplicar" value="1">
+      <button type="submit" class="btn btn-primary"
+              onclick="return confirm('¿Aplicar el remarcado a {{ filas | length }} artículos?');">
+        <i class="bi bi-check2"></i> Aplicar a {{ filas | length }} artículos
+      </button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Artículo</th>
+          <th>Categoría</th>
+          <th class="text-end">Precio actual</th>
+          <th class="text-end">Precio nuevo</th>
+          <th class="text-end">Variación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+        <tr>
+          <td>{{ fila.articulo.nombre }}</td>
+          <td>{{ fila.articulo.categoria or '—' }}</td>
+          <td class="text-end">{{ fila.articulo.precio_venta | moneda }}</td>
+          <td class="text-end fw-semibold">{{ fila.nuevo | moneda }}</td>
+          <td class="text-end {{ 'text-danger' if fila.nuevo < fila.articulo.precio_venta else ('text-success' if fila.nuevo > fila.articulo.precio_venta else 'text-muted') }}">
+            {{ (fila.nuevo - fila.articulo.precio_venta) | moneda }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
